@@ -121,6 +121,22 @@ The system uses two distinct models. Below is the step-by-step pipeline to repro
 
 ---
 
+## 📏 Severity Grading Standards
+
+To ensure objective assessment, the system calculates severity grades based on specific geometric ratios and angular measurements defined in the clinical study.
+
+**The detailed calculation formulas and classification thresholds are illustrated below:**
+
+![Severity Formula](这里会生成你的图片链接)
+
+* **Alar Facial Symmetry (A/B):** Calculated as the ratio of the vertical gap of the alar facial groove (A) to the nasal length (B).
+* **Nostril Width Ratio (CC/CN):** Calculated by comparing the cleft nostril width to the non-cleft nostril width.
+* **Columellar Angle:** Measured as the deviation of the columellar axis from the vertical midline.
+
+<img width="468" height="318" alt="屏幕截图 2025-11-23 020855" src="https://github.com/user-attachments/assets/9183ccef-7340-4b22-8755-ac27aa65d10d" />
+
+---
+
 ## 🚀 Web Application Usage
 
 ### Prerequisites
