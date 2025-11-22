@@ -13,6 +13,18 @@ The system utilizes Deep Learning (HRNet) to detect facial landmarks and calcula
 
 ---
 
+## 🔒 Data Privacy & Ethics Statement
+
+The dataset used for training this model consists of clinical images collected from **Hospital Universiti Putra Malaysia (HUPM)**.
+
+**Due to strict patient confidentiality agreements and ethical guidelines:**
+
+1.  **Raw Facial Images are NOT Included:** The original dataset containing patient faces has been excluded from this repository to protect patient privacy.
+2.  **Visual Test Results are Excluded:** Generated images with plotted landmarks on patient faces are also excluded.
+3.  **Available Data:** Only **anonymized annotation data** (CSV/JSON coordinates), **evaluation metrics**, and **pre-trained model weights** are provided. These allow researchers to verify the data structure and reproduce the training pipeline using their own datasets.
+
+---
+
 ## 📥 Setup & Installation (Crucial Step)
 1. Clone the Repository
 ```bash
@@ -26,18 +38,6 @@ Due to GitHub's file size limits, the pre-trained model weights (.pth) and encry
 ### best_NVM_cleftlip_model_HRNet.pth to Model_trainning/First_model/HRNet-Facial-Landmark-Detection/
 ### best_NVM_cleftlip_model_HRNet.pth to Web_application/services/HRNet-Facial-Landmark-Detection/
 ### best_NVM_cleftlip_model_HRNet.enc to Web_application/services/HRNet-Facial-Landmark-Detection/
-
----
-
-## 🔒 Data Privacy & Ethics Statement
-
-The dataset used for training this model consists of clinical images collected from **Hospital Universiti Putra Malaysia (HUPM)**.
-
-**Due to strict patient confidentiality agreements and ethical guidelines:**
-
-1.  **Raw Facial Images are NOT Included:** The original dataset containing patient faces has been excluded from this repository to protect patient privacy.
-2.  **Visual Test Results are Excluded:** Generated images with plotted landmarks on patient faces are also excluded.
-3.  **Available Data:** Only **anonymized annotation data** (CSV/JSON coordinates), **evaluation metrics**, and **pre-trained model weights** are provided. These allow researchers to verify the data structure and reproduce the training pipeline using their own datasets.
 
 ---
 
