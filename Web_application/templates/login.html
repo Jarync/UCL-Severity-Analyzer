@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-page login-page">
+    <div class="auth-container">
+        <div class="illustration">
+            <img src="{{ url_for('static', filename='images/doctor3.png') }}" alt="Illustration">
+        </div>
+        <div class="form-container">
+            <div class="form-header">
+                <h2>Welcome Back</h2>
+                <p>Sign in to your Cleft Lip Diagnosis System account</p>
+            </div>
+            <form method="POST" class="auth-form">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        {{ form.username(class="form-control", placeholder="Enter your username") }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        {{ form.password(class="form-control", placeholder="Enter your password") }}
+                    </div>
+                </div>
+                <button type="submit" class="btn-auth">Sign In</button>
+            </form>
+            <div class="form-footer">
+                <p>Don't have an account? <a href="{{ url_for('register') }}">Sign Up</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(120deg, #a8e6cf 0%, #dcedc1 100%);
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(168, 230, 207, 0.1) 0%, rgba(255, 255, 255, 0.1) 100%);
+    z-index: 1;
+}
+
+.auth-container {
+    display: flex;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-width: 1200px;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+    backdrop-filter: blur(10px);
+}
+
+.illustration {
+    flex: 1.2;
+    padding: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(168, 230, 207, 0.1) 0%, rgba(255, 255, 255, 0.2) 100%);
+    position: relative;
+}
+
+.illustration img {
+    max-width: 100%;
+    height: auto;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
+    transition: transform 0.3s ease;
+}
+
+.illustration img:hover {
+    transform: scale(1.02);
+}
+
+.form-container {
+    flex: 1;
+    padding: 80px 60px;
+    position: relative;
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.form-header h2 {
+    color: #2c3e50;
+    font-size: 3em;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.form-header p {
+    color: #6c757d;
+    font-size: 1.2em;
+}
+
+.auth-form .form-group {
+    margin-bottom: 30px;
+}
+
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-group i {
+    position: absolute;
+    left: 20px;
+    color: #7dcea0;
+    font-size: 1.2em;
+}
+
+.form-control {
+    width: 100%;
+    padding: 20px 20px 20px 50px;
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    font-size: 1.1em;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.form-control:focus {
+    border-color: #7dcea0;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(168, 230, 207, 0.15);
+    background: white;
+}
+
+.btn-auth {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #7dcea0, #a8e6cf);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    font-size: 1.2em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-auth:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(168, 230, 207, 0.3);
+}
+
+.form-footer {
+    text-align: center;
+    margin-top: 30px;
+    color: #6c757d;
+    font-size: 1.1em;
+}
+
+.form-footer a {
+    color: #7dcea0;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.form-footer a:hover {
+    color: #a8e6cf;
+    text-decoration: underline;
+}
+
+@media (max-width: 1200px) {
+    .auth-container {
+        max-width: 95%;
+    }
+}
+
+@media (max-width: 992px) {
+    .form-container {
+        padding: 60px 40px;
+    }
+    
+    .illustration {
+        padding: 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .auth-container {
+        flex-direction: column;
+    }
+    
+    .illustration {
+        padding: 40px;
+        max-height: 300px;
+    }
+    
+    .form-container {
+        padding: 40px 30px;
+    }
+
+    .form-header h2 {
+        font-size: 2.5em;
+    }
+
+    .form-control {
+        padding: 15px 15px 15px 45px;
+        font-size: 1em;
+    }
+
+    .btn-auth {
+        padding: 15px;
+        font-size: 1.1em;
+    }
+}
+</style>
+{% endblock %}

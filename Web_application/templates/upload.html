@@ -1,0 +1,2008 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-box">
+    <div class="page-header">
+        <h2>Upload & Preview</h2>
+        <p>Upload and analyze patient images</p>
+    </div>
+
+    <!-- 模型选择区域 -->
+    <div class="model-selection">
+        <h3>Select Analysis Model</h3>
+        <div class="model-options">
+            <label class="model-option active" data-model="alar">
+                <input type="radio" name="model_type" value="alar" checked>
+                <div class="option-content">
+                    <h4>Alar Facial Symmetry</h4>
+                    <p>6 keypoints: E1, E2, I1, I2, NL, NR</p>
+                    <p>Calculate: A/B ratio (alar facial symmetry)</p>
+                </div>
+            </label>
+            <label class="model-option" data-model="nostril">
+                <input type="radio" name="model_type" value="nostril">
+                <div class="option-content">
+                    <h4>Nostril Width Ratio (CC/CN)</h4>
+                    <p>5 keypoints: CC1, CC2, CN1, CN2, N</p>
+                    <p>Calculate: Nostril width ratio</p>
+                </div>
+            </label>
+            <label class="model-option" data-model="columellar">
+                <input type="radio" name="model_type" value="columellar">
+                <div class="option-content">
+                    <h4>Columellar Angle θ (degree)</h4>
+                    <p>Uses N point as origin</p>
+                    <p>Measure columellar angle deviation</p>
+                </div>
+            </label>
+            <label class="model-option" data-model="comprehensive">
+                <input type="radio" name="model_type" value="comprehensive">
+                <div class="option-content">
+                    <h4>Comprehensive Analysis</h4>
+                    <p>Combined analysis of all parameters</p>
+                    <p>Shows integrated UCL/N deformity rating</p>
+                </div>
+            </label>
+        </div>
+        
+        <!-- 清除按钮 -->
+        <div class="clear-section">
+            <button type="button" class="clear-button" onclick="clearAllData()">
+                <i class="fas fa-trash-alt"></i>
+                Clear All Images & Results
+            </button>
+        </div>
+    </div>
+
+    <form id="uploadForm" method="POST" enctype="multipart/form-data">
+        <div class="image-sections" id="image-sections">
+            <!-- Pre-Op Section -->
+            <div class="image-section">
+                <div class="section-card">
+                    <h3>Pre-Op Image</h3>
+                    <div class="image-tabs" id="pre-image-tabs">
+                        <button type="button" class="tab-button active" onclick="switchTab('pre', 'keypoints')">Keypoints Only</button>
+                        <button type="button" class="tab-button" onclick="switchTab('pre', 'ablines')">Detailed Lines</button>
+                    </div>
+                    <div id="preOpResult" class="image-preview">
+                        <img id="preOpImage" style="display: none;" alt="Pre-op keypoints preview">
+                        <img id="preOpABLines" style="display: none;" alt="Pre-op A/B lines preview">
+                        <div id="preOpPlaceholder" class="no-image">No Image</div>
+                    </div>
+                    <input type="file" name="pre_op_image" id="pre-op-upload" accept="image/*" class="file-input">
+                    <label for="pre-op-upload" class="file-label">
+                        <i class="fas fa-upload"></i>
+                        Select Pre-Op Image
+                    </label>
+                    
+                    <!-- 鼻柱角度控制区域 (仅在选择第三个模型时显示) -->
+                    <div id="pre-columellar-controls" class="columellar-controls" style="display: none;">
+                        <h4>Pre-Op Columellar Angle</h4>
+                        <div class="angle-controls">
+                            <div class="direction-control">
+                                <label>Direction:</label>
+                                <select id="pre-angle-direction">
+                                    <option value="left">Left Deviation</option>
+                                    <option value="right">Right Deviation</option>
+                                </select>
+                            </div>
+                            <div class="angle-slider-control">
+                                <label>Angle (degrees): <span id="pre-angle-value">0</span>°</label>
+                                                                    <input type="range" id="pre-angle-slider" min="0" max="90" value="0" step="1">
+                                <div class="angle-info">
+                                    <small>Real-time preview - drag to see angle changes</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="preOpDetails" class="details-section"></div>
+                </div>
+            </div>
+
+            <!-- Post-Op Section -->
+            <div class="image-section">
+                <div class="section-card">
+                    <h3>Post-Op Image</h3>
+                    <div class="image-tabs" id="post-image-tabs">
+                        <button type="button" class="tab-button active" onclick="switchTab('post', 'keypoints')">Keypoints Only</button>
+                        <button type="button" class="tab-button" onclick="switchTab('post', 'ablines')">Detailed Lines</button>
+                    </div>
+                    <div id="postOpResult" class="image-preview">
+                        <img id="postOpImage" style="display: none;" alt="Post-op keypoints preview">
+                        <img id="postOpABLines" style="display: none;" alt="Post-op A/B lines preview">
+                        <div id="postOpPlaceholder" class="no-image">No Image</div>
+                    </div>
+                    <input type="file" name="post_op_image" id="post-op-upload" accept="image/*" class="file-input">
+                    <label for="post-op-upload" class="file-label">
+                        <i class="fas fa-upload"></i>
+                        Select Post-Op Image
+                    </label>
+                    
+                    <!-- 鼻柱角度控制区域 (仅在选择第三个模型时显示) -->
+                    <div id="post-columellar-controls" class="columellar-controls" style="display: none;">
+                        <h4>Post-Op Columellar Angle</h4>
+                        <div class="angle-controls">
+                            <div class="direction-control">
+                                <label>Direction:</label>
+                                <select id="post-angle-direction">
+                                    <option value="left">Left Deviation</option>
+                                    <option value="right">Right Deviation</option>
+                                </select>
+                            </div>
+                            <div class="angle-slider-control">
+                                <label>Angle (degrees): <span id="post-angle-value">0</span>°</label>
+                                                                    <input type="range" id="post-angle-slider" min="0" max="90" value="0" step="1">
+                                <div class="angle-info">
+                                    <small>Real-time preview - drag to see angle changes</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="postOpDetails" class="details-section"></div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 综合分析专用显示区域 -->
+    <div id="comprehensive-display" class="comprehensive-display" style="display: none;">
+        <h3>Comprehensive Analysis Results</h3>
+        
+        <div class="comprehensive-results">
+            <div class="analysis-columns">
+                <div class="analysis-column">
+                    <h4>Pre-Op Analysis</h4>
+                    <div id="comprehensive-pre-analysis" class="analysis-content">
+                        <p class="no-data">No analysis data available</p>
+                        <p class="instruction">Please run individual models first on Pre-Op images</p>
+                    </div>
+                </div>
+                <div class="analysis-column">
+                    <h4>Post-Op Analysis</h4>
+                    <div id="comprehensive-post-analysis" class="analysis-content">
+                        <p class="no-data">No analysis data available</p>
+                        <p class="instruction">Please run individual models first on Post-Op images</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 综合分析上传和保存区域 - 移到参数框下方 -->
+        <div class="comprehensive-actions">
+            <div class="save-case-section">
+                <h4>Save Comprehensive Analysis as Case</h4>
+                <p class="instruction">Complete at least one analysis before saving as a case</p>
+                <div class="save-controls">
+                    <button type="button" class="save-case-button" onclick="saveComprehensiveCase()" id="save-comprehensive-button">
+                        <i class="fas fa-save"></i>
+                        Save as New Case
+                    </button>
+                    <div class="validation-status" id="validation-status">
+                        <span class="status-item" id="alar-status">
+                            <i class="fas fa-times-circle"></i>
+                            Alar Analysis: <span class="status-text">Missing</span>
+                        </span>
+                        <span class="status-item" id="nostril-status">
+                            <i class="fas fa-times-circle"></i>
+                            Nostril Analysis: <span class="status-text">Missing</span>
+                        </span>
+                        <span class="status-item" id="columellar-status">
+                            <i class="fas fa-times-circle"></i>
+                            Columellar Analysis: <span class="status-text">Missing</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rating-scale">
+        <h3 id="rating-title">Deformity Rating Scale</h3>
+        <div class="table-container">
+            <table id="rating-table">
+                <!-- 内容将通过JavaScript动态填充 -->
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.content-box {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h2 {
+    color: #2c3e50;
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.page-header p {
+    color: #6c757d;
+    font-size: 1.2em;
+}
+
+.model-selection {
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.model-selection h3 {
+    color: #2c3e50;
+    font-size: 1.8em;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+.model-options {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: nowrap;
+    align-items: stretch;
+}
+
+.model-option {
+    display: block;
+    cursor: pointer;
+    padding: 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: white;
+    transition: all 0.3s ease;
+    min-width: 200px;
+    max-width: 220px;
+    flex: 1;
+    position: relative;
+}
+
+.model-option:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #2E8B57;
+}
+
+.model-option.active {
+    border-color: #2E8B57;
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+}
+
+.model-option input[type="radio"] {
+    display: none;
+}
+
+.option-content h4 {
+    margin: 0 0 8px 0;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.option-content p {
+    margin: 3px 0;
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+.clear-section {
+    margin-top: 25px;
+    text-align: center;
+}
+
+.clear-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.clear-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+    background: linear-gradient(135deg, #c82333, #a71e2a);
+}
+
+.clear-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.image-sections {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.image-section {
+    flex: 1;
+}
+
+.section-card {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+.section-card h3 {
+    color: #2c3e50;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.image-preview {
+    width: 100%;
+    height: 300px;
+    border: 2px dashed #e9ecef;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+}
+
+.image-preview:hover {
+    border-color: #2E8B57;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.no-image {
+    color: #6c757d;
+    font-size: 1.1em;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    text-align: center;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.file-label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(46, 139, 87, 0.3);
+}
+
+.details-section {
+    text-align: center;
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    color: #2c3e50;
+}
+
+.rating-scale {
+    margin-top: 40px;
+}
+
+.rating-scale h3 {
+    color: #2c3e50;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.table-container {
+    overflow-x: auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+th {
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    font-weight: 600;
+    padding: 15px;
+    text-align: left;
+    font-size: 1.1em;
+}
+
+td {
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+tr:hover {
+    background-color: #f8f9fa;
+}
+
+.image-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: center;
+}
+
+.tab-button {
+    padding: 8px 16px;
+    border: 2px solid #2E8B57;
+    background: white;
+    color: #2E8B57;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.tab-button.active {
+    background: #2E8B57;
+    color: white;
+}
+
+.tab-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(46, 139, 87, 0.3);
+}
+
+/* 鼻柱角度控制样式 */
+.columellar-controls {
+    margin: 25px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    border: 2px solid #e9ecef;
+}
+
+.columellar-controls h4 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 1.3em;
+}
+
+.angle-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.direction-control, .angle-slider-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.direction-control label, .angle-slider-control label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.direction-control select {
+    padding: 8px 12px;
+    border: 2px solid #2E8B57;
+    border-radius: 8px;
+    background: white;
+    color: #2c3e50;
+    font-size: 1em;
+}
+
+.angle-slider-control {
+    flex-direction: column;
+    text-align: center;
+}
+
+#angle-slider {
+    width: 300px;
+    height: 8px;
+    border-radius: 5px;
+    background: #e9ecef;
+    outline: none;
+    margin-top: 10px;
+}
+
+#angle-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #2E8B57;
+    cursor: pointer;
+}
+
+#angle-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #2E8B57;
+    cursor: pointer;
+    border: none;
+}
+
+.apply-button {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.apply-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(46, 139, 87, 0.3);
+}
+
+.apply-button:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.angle-info {
+    margin-top: 8px;
+    text-align: center;
+}
+
+.angle-info small {
+    color: #6c757d;
+    font-style: italic;
+}
+
+@media (max-width: 992px) {
+    .content-box {
+        margin: 20px;
+    }
+
+    .image-sections {
+        flex-direction: column;
+    }
+
+    .image-section {
+        margin-bottom: 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header h2 {
+        font-size: 2em;
+    }
+
+    .section-card {
+        padding: 20px;
+    }
+
+    .image-preview {
+        height: 250px;
+    }
+}
+
+/* 综合分析样式 */
+.comprehensive-analysis {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.comprehensive-analysis h4 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 1.3em;
+}
+
+.parameter-section {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #2E8B57;
+}
+
+.parameter-section h5 {
+    color: #2E8B57;
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+}
+
+.parameter-section p {
+    margin: 5px 0;
+    color: #555;
+}
+
+.not-analyzed {
+    color: #6c757d !important;
+    font-style: italic;
+}
+
+.total-score-section {
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.total-score-section h5 {
+    color: white;
+    margin: 0 0 15px 0;
+    font-size: 1.2em;
+}
+
+.total-score-section p {
+    margin: 8px 0;
+    font-size: 1.05em;
+}
+
+.incomplete {
+    color: #ffd700 !important;
+    font-weight: bold;
+}
+
+/* 综合分析专用显示区域样式 */
+.comprehensive-display {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.comprehensive-display h3 {
+    text-align: center;
+    color: #2c3e50;
+    font-size: 2.2em;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+.comprehensive-actions {
+    margin-bottom: 40px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 20px;
+    padding: 30px;
+    border: 2px solid #dee2e6;
+}
+
+.save-case-section h4 {
+    text-align: center;
+    color: #2E8B57;
+    font-size: 1.6em;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.save-case-section .instruction {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    margin-bottom: 25px;
+    font-size: 1.1em;
+}
+
+.save-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.save-case-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 40px;
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    font-size: 1.2em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(46, 139, 87, 0.3);
+}
+
+.save-case-button:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(46, 139, 87, 0.4);
+    background: linear-gradient(135deg, #3CB371, #2E8B57);
+}
+
+.save-case-button:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+}
+
+.validation-status {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    background: white;
+    border-radius: 20px;
+    border: 2px solid #e9ecef;
+    font-size: 0.9em;
+    font-weight: 500;
+    min-width: 200px;
+    justify-content: flex-start;
+}
+
+.status-item.complete {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+}
+
+.status-item.complete i {
+    color: #28a745;
+}
+
+.status-item.incomplete {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+}
+
+.status-item.incomplete i {
+    color: #dc3545;
+}
+
+.analysis-columns {
+    display: flex;
+    gap: 30px;
+    justify-content: space-between;
+}
+
+.analysis-column {
+    flex: 1;
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 25px;
+}
+
+.analysis-column h4 {
+    text-align: center;
+    color: #2E8B57;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.analysis-content {
+    min-height: 400px;
+}
+
+.no-data {
+    text-align: center;
+    color: #6c757d;
+    font-size: 1.1em;
+    margin-top: 150px;
+}
+
+.instruction {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 20px;
+}
+</style>
+
+<script>
+// 评分标准数据
+const ratingScales = {
+    alar: {
+        title: 'Alar Facial Symmetry Rating Scale (A/B)',
+        headers: ['Variable', 'Class', 'Score'],
+        rows: [
+            ['Alar facial symmetry ratio', 'Mild (0.01 - 0.05)', '3'],
+            ['', 'Moderate (0.05 - 0.10)', '2'],
+            ['', 'Severe (> 0.10)', '1']
+        ]
+    },
+    nostril: {
+        title: 'Nostril Width Ratio Rating Scale',
+        headers: ['Variable', 'Class', 'Score'],
+        rows: [
+            ['Nostril width ratio', 'Mild (0.90-1.10)', '3'],
+            ['', 'Moderate (0.60-<0.90; >1.10-1.40)', '2'],
+            ['', 'Severe (<0.60; >1.40)', '1']
+        ]
+    },
+    columellar: {
+        title: 'Columellar Angle Rating Scale',
+        headers: ['Variable', 'Class', 'Score'],
+        rows: [
+            ['Columellar angle (degree)', 'Mild (0-15)', '3'],
+            ['', 'Moderate (16-30)', '2'],
+            ['', 'Severe (>30)', '1']
+        ]
+    },
+    comprehensive: {
+        title: 'UCL/N Deformity Rating Scale',
+        headers: ['Variable', 'Class', 'Score'],
+        rows: [
+            ['Alar facial symmetry ratio', 'Mild (0.01-0.05)', '3'],
+            ['', 'Moderate (>0.05-0.10)', '2'], 
+            ['', 'Severe (>0.10)', '1'],
+            ['Nostril width ratio', 'Mild (0.90-1.10)', '3'],
+            ['', 'Moderate (0.60-<0.90; >1.10-1.40)', '2'],
+            ['', 'Severe (<0.60; >1.40)', '1'],
+            ['Columellar angle (degree)', 'Mild (0-15)', '3'],
+            ['', 'Moderate (16-30)', '2'],
+            ['', 'Severe (>30)', '1']
+        ],
+        severityTable: {
+            title: 'UCL/N Deformity Severity Grade Based on Σ Deformity Rating Scale',
+            headers: ['Σ UCL/N deformity rating scale', 'UCL/N deformity severity grade'],
+            rows: [
+                ['9', '1'],
+                ['7-8', '2'],
+                ['4-6', '3'],
+                ['3', '4']
+            ]
+        }
+    }
+};
+
+// 当前选择的模型
+let currentModel = 'alar';
+
+// 存储图片数据的全局变量 - 支持多模型
+const imageData = {
+    alar: {
+        pre: { keypoints: null, ablines: null, details: null },
+        post: { keypoints: null, ablines: null, details: null }
+    },
+    nostril: {
+        pre: { keypoints: null, ablines: null, details: null },
+        post: { keypoints: null, ablines: null, details: null }
+    },
+    columellar: {
+        pre: { image: null, details: null, nPoint: null },
+        post: { image: null, details: null, nPoint: null }
+    },
+    comprehensive: {
+        pre: { alar: null, nostril: null, columellar: null },
+        post: { alar: null, nostril: null, columellar: null }
+    }
+};
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    updateRatingScale();
+    setupModelSelection();
+    setupImageUpload();
+    setupColumellarControls();
+});
+
+function setupModelSelection() {
+    const modelOptions = document.querySelectorAll('.model-option');
+    modelOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // 移除所有active类
+            modelOptions.forEach(opt => opt.classList.remove('active'));
+            // 添加active类到当前选项
+            this.classList.add('active');
+            // 选中对应的radio button
+            this.querySelector('input[type="radio"]').checked = true;
+            // 更新当前模型
+            currentModel = this.dataset.model;
+            // 更新评分标准
+            updateRatingScale();
+            // 显示/隐藏控制区域
+            toggleModelControls();
+            // 恢复当前模型的数据（而不是清除）
+            restoreModelData();
+        });
+    });
+}
+
+function setupImageUpload() {
+    document.getElementById('pre-op-upload').addEventListener('change', function(e) {
+        handleImageUpload(this, 'pre');
+    });
+
+    document.getElementById('post-op-upload').addEventListener('change', function(e) {
+        handleImageUpload(this, 'post');
+    });
+    
+    // 添加点击时清除文件输入值，确保每次选择都能触发change事件
+    document.getElementById('pre-op-upload').addEventListener('click', function(e) {
+        this.value = '';
+    });
+
+    document.getElementById('post-op-upload').addEventListener('click', function(e) {
+        this.value = '';
+    });
+}
+
+function updateRatingScale() {
+    const scale = ratingScales[currentModel];
+    document.getElementById('rating-title').textContent = scale.title;
+    
+    const table = document.getElementById('rating-table');
+    
+    if (currentModel === 'comprehensive') {
+        // 综合分析显示两个表格
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    ${scale.headers.map(header => `<th>${header}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>
+                ${scale.rows.map(row => `
+                    <tr>
+                        ${row.map(cell => `<td>${cell}</td>`).join('')}
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+        
+        // 添加第二个表格
+        const tableContainer = document.querySelector('.table-container');
+        const secondTable = document.createElement('table');
+        secondTable.className = 'severity-table';
+        secondTable.style.marginTop = '30px';
+        secondTable.innerHTML = `
+            <thead>
+                <tr>
+                    <th colspan="2" style="text-align: center; background: #f8f9fa; font-weight: bold; color: #2c3e50;">
+                        ${scale.severityTable.title}
+                    </th>
+                </tr>
+                <tr>
+                    ${scale.severityTable.headers.map(header => `<th>${header}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>
+                ${scale.severityTable.rows.map(row => `
+                    <tr>
+                        ${row.map(cell => `<td>${cell}</td>`).join('')}
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+        
+        // 移除已存在的第二个表格
+        const existingSecondTable = tableContainer.querySelector('.severity-table');
+        if (existingSecondTable) {
+            existingSecondTable.remove();
+        }
+        
+        tableContainer.appendChild(secondTable);
+    } else {
+        // 其他模型只显示单个表格
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    ${scale.headers.map(header => `<th>${header}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>
+                ${scale.rows.map(row => `
+                    <tr>
+                        ${row.map(cell => `<td>${cell}</td>`).join('')}
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+        
+        // 移除第二个表格（如果存在）
+        const tableContainer = document.querySelector('.table-container');
+        const existingSecondTable = tableContainer.querySelector('.severity-table');
+        if (existingSecondTable) {
+            existingSecondTable.remove();
+        }
+    }
+}
+
+function restoreModelData() {
+    // 恢复当前模型的数据
+    ['pre', 'post'].forEach(type => {
+        const data = imageData[currentModel][type];
+        
+        if (currentModel === 'comprehensive') {
+            // 第四个模型：综合分析 - 直接显示，不需要图片
+            return;
+        } else if (currentModel === 'columellar') {
+            // 第三个模型的恢复逻辑
+            if (data && data.originalImage) {
+                // 恢复图片显示
+                const img = document.getElementById(`${type}OpImage`);
+                
+                // 如果有角度信息，显示带角度线的图片
+                if (data.currentAngle > 0) {
+                    drawAngleLineRealtime(type, data.originalImage, data.nPoint, data.currentAngle, data.currentDirection);
+                } else {
+                    img.src = `data:image/png;base64,${data.image}`;
+                }
+                
+                img.style.display = 'block';
+                document.getElementById(`${type}OpPlaceholder`).style.display = 'none';
+                
+                // 恢复详细信息
+                document.getElementById(`${type}OpDetails`).innerHTML = data.details;
+                
+                // 恢复控制器状态
+                if (data.currentAngle !== undefined) {
+                    document.getElementById(`${type}-angle-slider`).value = data.currentAngle;
+                    document.getElementById(`${type}-angle-value`).textContent = data.currentAngle;
+                    document.getElementById(`${type}-angle-direction`).value = data.currentDirection;
+                }
+            } else {
+                // 没有数据时显示占位符
+                document.getElementById(`${type}OpImage`).style.display = 'none';
+                document.getElementById(`${type}OpPlaceholder`).style.display = 'flex';
+                document.getElementById(`${type}OpPlaceholder`).textContent = 'No Image';
+                document.getElementById(`${type}OpDetails`).innerHTML = '';
+            }
+        } else {
+            // 前两个模型的恢复逻辑
+            if (data.keypoints) {
+                // 恢复图片显示
+                const keypointsImg = document.getElementById(`${type}OpImage`);
+                const ablinesImg = document.getElementById(`${type}OpABLines`);
+                
+                keypointsImg.src = `data:image/png;base64,${data.keypoints}`;
+                ablinesImg.src = `data:image/png;base64,${data.ablines}`;
+                
+                // 默认显示关键点图片
+                keypointsImg.style.display = 'block';
+                ablinesImg.style.display = 'none';
+                document.getElementById(`${type}OpPlaceholder`).style.display = 'none';
+                
+                // 恢复详细信息
+                document.getElementById(`${type}OpDetails`).innerHTML = data.details;
+                
+                // 重置tab按钮状态
+                const tabSection = document.querySelector(`#${type}OpResult`).closest('.section-card');
+                const buttons = tabSection.querySelectorAll('.tab-button');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                buttons[0].classList.add('active'); // 激活第一个tab
+            } else {
+                // 没有数据时显示占位符
+                document.getElementById(`${type}OpImage`).style.display = 'none';
+                document.getElementById(`${type}OpABLines`).style.display = 'none';
+                document.getElementById(`${type}OpPlaceholder`).style.display = 'flex';
+                document.getElementById(`${type}OpPlaceholder`).textContent = 'No Image';
+                document.getElementById(`${type}OpDetails`).innerHTML = '';
+            }
+        }
+    });
+}
+
+function clearAllData(skipConfirm = false) {
+    // 确认清除操作（除非跳过确认）
+    if (!skipConfirm && !confirm('确定要清除所有图片和结果吗？此操作不可撤销。')) {
+        return;
+    }
+    
+    // 清除所有模型的数据
+    Object.keys(imageData).forEach(model => {
+        if (model === 'columellar') {
+            imageData[model].pre = { image: null, details: null, nPoint: null, originalImage: null, currentAngle: 0, currentDirection: 'right' };
+            imageData[model].post = { image: null, details: null, nPoint: null, originalImage: null, currentAngle: 0, currentDirection: 'right' };
+        } else {
+            imageData[model].pre = { keypoints: null, ablines: null, details: null };
+            imageData[model].post = { keypoints: null, ablines: null, details: null };
+        }
+    });
+    
+    // 重置界面显示
+    ['pre', 'post'].forEach(type => {
+        document.getElementById(`${type}OpImage`).style.display = 'none';
+        document.getElementById(`${type}OpABLines`).style.display = 'none';
+        document.getElementById(`${type}OpPlaceholder`).style.display = 'flex';
+        document.getElementById(`${type}OpPlaceholder`).textContent = 'No Image';
+        document.getElementById(`${type}OpDetails`).innerHTML = '';
+        
+        // 清除文件输入
+        document.getElementById(`${type}-op-upload`).value = '';
+        
+        // 重置tab按钮状态
+        const tabSection = document.querySelector(`#${type}OpResult`).closest('.section-card');
+        const buttons = tabSection.querySelectorAll('.tab-button');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        buttons[0].classList.add('active'); // 激活第一个tab
+    });
+    
+    // 显示清除成功提示
+    alert('所有数据已清除！');
+}
+
+function handleImageUpload(input, type) {
+    if (!input.files || !input.files[0]) return;
+
+    const formData = new FormData();
+    formData.append(`${type}_op_image`, input.files[0]);
+    formData.append('model_type', currentModel);
+
+    document.getElementById(`${type}OpPlaceholder`).textContent = 'Processing...';
+
+    fetch('{{ url_for("process_image_route") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (currentModel === 'columellar') {
+                // 第三个模型：鼻柱角度
+                const detailsHtml = `
+                    <p><strong>N Point:</strong> (${data.n_point[0].toFixed(1)}, ${data.n_point[1].toFixed(1)})</p>
+                    <p><strong>Direction:</strong> Not set</p>
+                    <p><strong>Angle:</strong> 0°</p>
+                    <p><strong>Status:</strong> Ready for angle measurement</p>
+                    <p><em>Use the controls above to set angle and direction</em></p>
+                `;
+                
+                // 存储N点数据和原始图片用于角度计算
+                imageData.columellar[type] = {
+                    originalImage: data.original_image,  // 保存原始图片
+                    image: data.image,  // 带N点标记的图片
+                    details: detailsHtml,
+                    nPoint: data.n_point,
+                    currentAngle: 0,
+                    currentDirection: 'right'
+                };
+                
+                // 设置图片源
+                const img = document.getElementById(`${type}OpImage`);
+                img.src = `data:image/png;base64,${data.image}`;
+                img.style.display = 'block';
+                document.getElementById(`${type}OpPlaceholder`).style.display = 'none';
+                
+                // 显示详细信息
+                document.getElementById(`${type}OpDetails`).innerHTML = detailsHtml;
+            } else {
+                // 前两个模型的处理逻辑
+                let detailsHtml = '';
+                if (currentModel === 'alar') {
+                    detailsHtml = `
+                        <p><strong>A Value:</strong> ${data.A_value} px</p>
+                        <p><strong>B Value:</strong> ${data.B_value} px</p>
+                        <p><strong>A/B Ratio:</strong> ${data.ratio}</p>
+                        <p><strong>Severity:</strong> ${data.severity}</p>
+                        <p><strong>Score:</strong> ${data.score || 'N/A'}</p>
+                    `;
+                            } else if (currentModel === 'nostril') {
+                detailsHtml = `
+                    <p><strong>CC Distance (CC1-CC2):</strong> ${data.CC_distance} px</p>
+                    <p><strong>CN Distance (CN1-CN2):</strong> ${data.CN_distance} px</p>
+                    <p><strong>Nostril Width Ratio (CC/CN):</strong> ${data.ratio}</p>
+                    <p><strong>Severity:</strong> ${data.severity}</p>
+                    <p><strong>Score:</strong> ${data.score || 'N/A'}</p>
+                `;
+            } else if (currentModel === 'columellar') {
+                detailsHtml = `
+                    <p><strong>Direction:</strong> ${data.direction || 'Not set'}</p>
+                    <p><strong>Angle:</strong> ${data.angle || 0}°</p>
+                    <p><strong>Severity:</strong> ${data.severity || 'Not calculated'}</p>
+                    <p><strong>Score:</strong> ${data.score || 'N/A'}</p>
+                `;
+            }
+                
+                // 存储到对应模型的数据中
+                imageData[currentModel][type] = {
+                    keypoints: data.image,
+                    ablines: data.ab_lines_image || data.nostril_lines_image,
+                    details: detailsHtml
+                };
+                
+                // 设置图片源
+                const keypointsImg = document.getElementById(`${type}OpImage`);
+                const ablinesImg = document.getElementById(`${type}OpABLines`);
+                keypointsImg.src = `data:image/png;base64,${data.image}`;
+                ablinesImg.src = `data:image/png;base64,${data.ab_lines_image || data.nostril_lines_image}`;
+                
+                // 默认显示关键点图片
+                keypointsImg.style.display = 'block';
+                ablinesImg.style.display = 'none';
+                document.getElementById(`${type}OpPlaceholder`).style.display = 'none';
+                
+                // 显示详细信息
+                document.getElementById(`${type}OpDetails`).innerHTML = detailsHtml;
+            }
+            
+            // 如果当前在综合分析模式，更新综合分析显示
+            if (currentModel === 'comprehensive') {
+                updateComprehensiveDisplay();
+            }
+            
+            // 总是更新验证状态，以便综合分析页面知道数据完整性
+            updateValidationStatus();
+        } else {
+            alert(data.error || 'Error processing image');
+            document.getElementById(`${type}OpPlaceholder`).textContent = 'No Image';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error uploading image');
+        document.getElementById(`${type}OpPlaceholder`).textContent = 'No Image';
+    });
+}
+
+function switchTab(type, view) {
+    // 更新按钮状态
+    const tabSection = event.target.closest('.section-card');
+    const buttons = tabSection.querySelectorAll('.tab-button');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // 显示对应的图片
+    const keypointsImg = document.getElementById(`${type}OpImage`);
+    const ablinesImg = document.getElementById(`${type}OpABLines`);
+    
+    if (view === 'keypoints') {
+        keypointsImg.style.display = 'block';
+        ablinesImg.style.display = 'none';
+    } else {
+        keypointsImg.style.display = 'none';
+        ablinesImg.style.display = 'block';
+    }
+}
+
+// 新增：显示综合分析
+function showComprehensiveAnalysis(type) {
+    // 获取所有模型的数据
+    const alarData = imageData.alar[type];
+    const nostrilData = imageData.nostril[type];
+    const columellarData = imageData.columellar[type];
+    
+    // 隐藏图片显示
+    document.getElementById(`${type}OpImage`).style.display = 'none';
+    document.getElementById(`${type}OpABLines`).style.display = 'none';
+    document.getElementById(`${type}OpPlaceholder`).style.display = 'block';
+    document.getElementById(`${type}OpPlaceholder`).textContent = 'Comprehensive Analysis';
+    
+    // 生成综合分析报告
+    let analysisHtml = `<div class="comprehensive-analysis">`;
+    analysisHtml += `<h4>${type === 'pre' ? 'Pre-Op' : 'Post-Op'} Comprehensive Analysis</h4>`;
+    
+    let totalScore = 0;
+    let parameterCount = 0;
+    
+    // Alar Facial Symmetry
+    if (alarData && alarData.details) {
+        const alarDetails = parseDetailsFromHtml(alarData.details);
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>1. Alar Facial Symmetry</h5>
+                <p><strong>A/B Ratio:</strong> ${alarDetails.ratio || 'N/A'}</p>
+                <p><strong>Severity:</strong> ${alarDetails.severity || 'N/A'}</p>
+                <p><strong>Score:</strong> ${alarDetails.score || 'N/A'}</p>
+            </div>
+        `;
+        if (alarDetails.score) {
+            totalScore += parseInt(alarDetails.score);
+            parameterCount++;
+        }
+    } else {
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>1. Alar Facial Symmetry</h5>
+                <p class="not-analyzed">Not analyzed - Please run Alar Facial Symmetry model first</p>
+            </div>
+        `;
+    }
+    
+    // Nostril Width Ratio
+    if (nostrilData && nostrilData.details) {
+        const nostrilDetails = parseDetailsFromHtml(nostrilData.details);
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>2. Nostril Width Ratio</h5>
+                <p><strong>CC/CN Ratio:</strong> ${nostrilDetails.ratio || 'N/A'}</p>
+                <p><strong>Severity:</strong> ${nostrilDetails.severity || 'N/A'}</p>
+                <p><strong>Score:</strong> ${nostrilDetails.score || 'N/A'}</p>
+            </div>
+        `;
+        if (nostrilDetails.score) {
+            totalScore += parseInt(nostrilDetails.score);
+            parameterCount++;
+        }
+    } else {
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>2. Nostril Width Ratio</h5>
+                <p class="not-analyzed">Not analyzed - Please run Nostril Width Ratio model first</p>
+            </div>
+        `;
+    }
+    
+    // Columellar Angle
+    if (columellarData && columellarData.details) {
+        const columellarDetails = parseDetailsFromHtml(columellarData.details);
+        let columellarScore = 'N/A';
+        if (columellarData.currentAngle !== undefined) {
+            const angle = columellarData.currentAngle;
+            if (angle <= 15) columellarScore = 3;
+            else if (angle <= 30) columellarScore = 2;
+            else columellarScore = 1;
+        }
+        
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>3. Columellar Angle</h5>
+                <p><strong>Angle:</strong> ${columellarData.currentAngle || 0}°</p>
+                <p><strong>Direction:</strong> ${columellarData.currentDirection || 'Not set'}</p>
+                <p><strong>Score:</strong> ${columellarScore}</p>
+            </div>
+        `;
+        if (columellarScore !== 'N/A') {
+            totalScore += parseInt(columellarScore);
+            parameterCount++;
+        }
+    } else {
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>3. Columellar Angle</h5>
+                <p class="not-analyzed">Not analyzed - Please run Columellar Angle model first</p>
+            </div>
+        `;
+    }
+    
+    // 综合评分
+    analysisHtml += `
+        <div class="total-score-section">
+            <h5>Overall Assessment</h5>
+            <p><strong>Total Score (Σ):</strong> ${parameterCount > 0 ? totalScore : 'N/A'}</p>
+            <p><strong>Parameters Analyzed:</strong> ${parameterCount}/3</p>
+    `;
+    
+    if (parameterCount === 3) {
+        let severityGrade = '';
+        if (totalScore === 9) severityGrade = '1 (Least severe)';
+        else if (totalScore >= 7) severityGrade = '2 (Mild)';
+        else if (totalScore >= 4) severityGrade = '3 (Moderate)';
+        else severityGrade = '4 (Most severe)';
+        
+        analysisHtml += `<p><strong>UCL/N Deformity Severity Grade:</strong> ${severityGrade}</p>`;
+    } else {
+        analysisHtml += `<p class="incomplete">Complete all three analyses for final severity grade</p>`;
+    }
+    
+    analysisHtml += `</div></div>`;
+    
+    document.getElementById(`${type}OpDetails`).innerHTML = analysisHtml;
+}
+
+// 辅助函数：从HTML详情中解析数据
+function parseDetailsFromHtml(html) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const details = {};
+    
+    doc.querySelectorAll('p').forEach(p => {
+        const text = p.textContent;
+        if (text.includes('Ratio:')) {
+            details.ratio = text.split(':')[1].trim();
+        } else if (text.includes('Severity:')) {
+            details.severity = text.split(':')[1].trim();
+        } else if (text.includes('Score:')) {
+            details.score = text.split(':')[1].trim();
+        }
+    });
+    
+    return details;
+}
+
+// 新增：更新综合分析显示
+function updateComprehensiveDisplay() {
+    // 更新Pre-Op分析
+    const preAnalysisContent = generateComprehensiveAnalysisContent('pre');
+    document.getElementById('comprehensive-pre-analysis').innerHTML = preAnalysisContent;
+    
+    // 更新Post-Op分析
+    const postAnalysisContent = generateComprehensiveAnalysisContent('post');
+    document.getElementById('comprehensive-post-analysis').innerHTML = postAnalysisContent;
+    
+    // 更新验证状态
+    updateValidationStatus();
+}
+
+// 新增：更新验证状态
+function updateValidationStatus() {
+    const alarStatus = document.getElementById('alar-status');
+    const nostrilStatus = document.getElementById('nostril-status');
+    const columellarStatus = document.getElementById('columellar-status');
+    const saveButton = document.getElementById('save-comprehensive-button');
+    
+    // 检查每个模型的数据完整性
+    const alarComplete = checkModelComplete('alar');
+    const nostrilComplete = checkModelComplete('nostril');
+    const columellarComplete = checkModelComplete('columellar');
+    
+    // 更新状态显示
+    updateStatusItem(alarStatus, alarComplete, 'Alar Analysis');
+    updateStatusItem(nostrilStatus, nostrilComplete, 'Nostril Analysis');
+    updateStatusItem(columellarStatus, columellarComplete, 'Columellar Analysis');
+    
+    // 更新保存按钮状态
+    const allComplete = alarComplete && nostrilComplete && columellarComplete;
+    saveButton.disabled = !allComplete;
+    
+    if (allComplete) {
+        saveButton.innerHTML = '<i class="fas fa-save"></i> Save as New Case';
+    } else {
+        const missing = [];
+        if (!alarComplete) missing.push('Alar');
+        if (!nostrilComplete) missing.push('Nostril');
+        if (!columellarComplete) missing.push('Columellar');
+        saveButton.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Missing: ${missing.join(', ')}`;
+    }
+}
+
+// 新增：检查模型是否完整
+function checkModelComplete(modelType) {
+    const preData = imageData[modelType].pre;
+    const postData = imageData[modelType].post;
+    
+    if (modelType === 'columellar') {
+        // 鼻柱角度模型需要至少一个(pre或post)有originalImage和角度设置
+        const preComplete = preData.originalImage && preData.currentAngle !== undefined;
+        const postComplete = postData.originalImage && postData.currentAngle !== undefined;
+        return preComplete || postComplete;
+    } else {
+        // 前两个模型需要至少一个(pre或post)有keypoints数据
+        return preData.keypoints || postData.keypoints;
+    }
+}
+
+// 新增：更新单个状态项
+function updateStatusItem(statusElement, isComplete, label) {
+    const icon = statusElement.querySelector('i');
+    const text = statusElement.querySelector('.status-text');
+    
+    statusElement.classList.remove('complete', 'incomplete');
+    
+    if (isComplete) {
+        statusElement.classList.add('complete');
+        icon.className = 'fas fa-check-circle';
+        text.textContent = 'Complete';
+    } else {
+        statusElement.classList.add('incomplete');
+        icon.className = 'fas fa-times-circle';
+        text.textContent = 'Missing';
+    }
+}
+
+// 新增：保存综合分析为病例
+function saveComprehensiveCase() {
+    // 再次验证所有数据完整性
+    if (!checkModelComplete('alar') || !checkModelComplete('nostril') || !checkModelComplete('columellar')) {
+        alert('Please complete the analysis of all three models before saving the case.');
+        return;
+    }
+    
+    // 确认保存
+    if (!confirm('Are you sure you want to save the current comprehensive analysis results as a new case?')) {
+        return;
+    }
+    
+    // 准备保存数据 - 保存带辅助线的图片
+    const caseData = {
+        // Pre-Op数据 - 优先保存辅助线图片
+        pre_alar_image: imageData.alar.pre.ablines || imageData.alar.pre.keypoints,
+        pre_alar_ratio: extractRatioFromDetails(imageData.alar.pre.details),
+        pre_alar_severity: extractSeverityFromDetails(imageData.alar.pre.details),
+        
+        pre_nostril_image: imageData.nostril.pre.ablines || imageData.nostril.pre.keypoints,
+        pre_nostril_ratio: extractRatioFromDetails(imageData.nostril.pre.details),
+        pre_nostril_severity: extractSeverityFromDetails(imageData.nostril.pre.details),
+        
+        pre_columellar_image: imageData.columellar.pre.image, // 带角度线的图片
+        pre_columellar_angle: imageData.columellar.pre.currentAngle,
+        pre_columellar_direction: imageData.columellar.pre.currentDirection,
+        
+        // Post-Op数据 - 优先保存辅助线图片
+        post_alar_image: imageData.alar.post.ablines || imageData.alar.post.keypoints,
+        post_alar_ratio: extractRatioFromDetails(imageData.alar.post.details),
+        post_alar_severity: extractSeverityFromDetails(imageData.alar.post.details),
+        
+        post_nostril_image: imageData.nostril.post.ablines || imageData.nostril.post.keypoints,
+        post_nostril_ratio: extractRatioFromDetails(imageData.nostril.post.details),
+        post_nostril_severity: extractSeverityFromDetails(imageData.nostril.post.details),
+        
+        post_columellar_image: imageData.columellar.post.image, // 带角度线的图片
+        post_columellar_angle: imageData.columellar.post.currentAngle,
+        post_columellar_direction: imageData.columellar.post.currentDirection
+    };
+    
+    // 发送保存请求
+    fetch('{{ url_for("save_comprehensive_case") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(caseData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Comprehensive analysis case saved successfully!');
+            // 清除所有数据（跳过确认）
+            clearAllData(true);
+        } else {
+            alert('Save failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Save error:', error);
+        alert('Save failed: Network error');
+    });
+}
+
+// 新增：从详细信息HTML中提取比率
+function extractRatioFromDetails(detailsHtml) {
+    if (!detailsHtml) return null;
+    const match = detailsHtml.match(/Ratio.*?(\d+\.\d+)/);
+    return match ? parseFloat(match[1]) : null;
+}
+
+// 新增：从详细信息HTML中提取严重程度
+function extractSeverityFromDetails(detailsHtml) {
+    if (!detailsHtml) return null;
+    const match = detailsHtml.match(/Severity.*?<\/strong>\s*([^<]+)/);
+    return match ? match[1].trim() : null;
+}
+
+// 生成综合分析内容
+function generateComprehensiveAnalysisContent(type) {
+    const alarData = imageData.alar[type];
+    const nostrilData = imageData.nostril[type];
+    const columellarData = imageData.columellar[type];
+    
+    let analysisHtml = '';
+    let totalScore = 0;
+    let parameterCount = 0;
+    
+    // Alar Facial Symmetry
+    if (alarData && alarData.details) {
+        const alarDetails = parseDetailsFromHtml(alarData.details);
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>1. Alar Facial Symmetry</h5>
+                <p><strong>A/B Ratio:</strong> ${alarDetails.ratio || 'N/A'}</p>
+                <p><strong>Severity:</strong> ${alarDetails.severity || 'N/A'}</p>
+                <p><strong>Score:</strong> ${alarDetails.score || 'N/A'}</p>
+            </div>
+        `;
+        if (alarDetails.score) {
+            totalScore += parseInt(alarDetails.score);
+            parameterCount++;
+        }
+    } else {
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>1. Alar Facial Symmetry</h5>
+                <p class="not-analyzed">Not analyzed</p>
+            </div>
+        `;
+    }
+    
+    // Nostril Width Ratio
+    if (nostrilData && nostrilData.details) {
+        const nostrilDetails = parseDetailsFromHtml(nostrilData.details);
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>2. Nostril Width Ratio</h5>
+                <p><strong>CC/CN Ratio:</strong> ${nostrilDetails.ratio || 'N/A'}</p>
+                <p><strong>Severity:</strong> ${nostrilDetails.severity || 'N/A'}</p>
+                <p><strong>Score:</strong> ${nostrilDetails.score || 'N/A'}</p>
+            </div>
+        `;
+        if (nostrilDetails.score) {
+            totalScore += parseInt(nostrilDetails.score);
+            parameterCount++;
+        }
+    } else {
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>2. Nostril Width Ratio</h5>
+                <p class="not-analyzed">Not analyzed</p>
+            </div>
+        `;
+    }
+    
+    // Columellar Angle
+    if (columellarData && columellarData.details) {
+        let columellarScore = 'N/A';
+        if (columellarData.currentAngle !== undefined) {
+            const angle = columellarData.currentAngle;
+            if (angle <= 15) columellarScore = 3;
+            else if (angle <= 30) columellarScore = 2;
+            else columellarScore = 1;
+        }
+        
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>3. Columellar Angle</h5>
+                <p><strong>Angle:</strong> ${columellarData.currentAngle || 0}°</p>
+                <p><strong>Direction:</strong> ${columellarData.currentDirection || 'Not set'}</p>
+                <p><strong>Score:</strong> ${columellarScore}</p>
+            </div>
+        `;
+        if (columellarScore !== 'N/A') {
+            totalScore += parseInt(columellarScore);
+            parameterCount++;
+        }
+    } else {
+        analysisHtml += `
+            <div class="parameter-section">
+                <h5>3. Columellar Angle</h5>
+                <p class="not-analyzed">Not analyzed</p>
+            </div>
+        `;
+    }
+    
+    // 总评分
+    analysisHtml += `
+        <div class="total-score-section">
+            <h5>Overall Assessment</h5>
+            <p><strong>Total Score (Σ):</strong> ${parameterCount > 0 ? totalScore : 'N/A'}</p>
+            <p><strong>Parameters Analyzed:</strong> ${parameterCount}/3</p>
+    `;
+    
+    if (parameterCount === 3) {
+        let severityGrade = '';
+        if (totalScore === 9) severityGrade = '1 (Least severe)';
+        else if (totalScore >= 7) severityGrade = '2 (Mild)';
+        else if (totalScore >= 4) severityGrade = '3 (Moderate)';
+        else severityGrade = '4 (Most severe)';
+        
+        analysisHtml += `<p><strong>UCL/N Deformity Severity Grade:</strong> ${severityGrade}</p>`;
+    } else {
+        analysisHtml += `<p class="incomplete">Complete all three analyses for final severity grade</p>`;
+    }
+    
+    analysisHtml += `</div>`;
+    
+    if (parameterCount === 0) {
+        return `
+            <p class="no-data">No analysis data available</p>
+            <p class="instruction">Please run individual models first on ${type === 'pre' ? 'Pre-Op' : 'Post-Op'} images</p>
+        `;
+    }
+    
+    return analysisHtml;
+}
+
+// 新增：控制模型特定UI显示/隐藏
+function toggleModelControls() {
+    const preColumellarControls = document.getElementById('pre-columellar-controls');
+    const postColumellarControls = document.getElementById('post-columellar-controls');
+    const preImageTabs = document.getElementById('pre-image-tabs');
+    const postImageTabs = document.getElementById('post-image-tabs');
+    const imageSections = document.getElementById('image-sections');
+    
+    if (currentModel === 'columellar') {
+        // 显示角度控制，隐藏图片标签页
+        preColumellarControls.style.display = 'block';
+        postColumellarControls.style.display = 'block';
+        preImageTabs.style.display = 'none';
+        postImageTabs.style.display = 'none';
+        imageSections.style.display = 'flex';
+    } else if (currentModel === 'comprehensive') {
+        // 隐藏整个图片上传区域，显示综合分析区域
+        imageSections.style.display = 'none';
+        document.getElementById('comprehensive-display').style.display = 'block';
+        // 立即更新综合分析内容
+        updateComprehensiveDisplay();
+    } else {
+        // 隐藏角度控制，显示图片标签页
+        preColumellarControls.style.display = 'none';
+        postColumellarControls.style.display = 'none';
+        preImageTabs.style.display = 'flex';
+        postImageTabs.style.display = 'flex';
+        imageSections.style.display = 'flex';
+        document.getElementById('comprehensive-display').style.display = 'none';
+    }
+}
+
+// 新增：设置鼻柱角度控制
+function setupColumellarControls() {
+    // Pre-Op 控制器
+    const preAngleSlider = document.getElementById('pre-angle-slider');
+    const preAngleValue = document.getElementById('pre-angle-value');
+    const preDirectionSelect = document.getElementById('pre-angle-direction');
+    
+    // Post-Op 控制器
+    const postAngleSlider = document.getElementById('post-angle-slider');
+    const postAngleValue = document.getElementById('post-angle-value');
+    const postDirectionSelect = document.getElementById('post-angle-direction');
+    
+    // Pre-Op 滑块值变化 - 实时更新
+    preAngleSlider.addEventListener('input', function() {
+        preAngleValue.textContent = this.value;
+        updateAnglePreview('pre');
+    });
+    
+    // Pre-Op 方向改变 - 实时更新
+    preDirectionSelect.addEventListener('change', function() {
+        updateAnglePreview('pre');
+    });
+    
+    // Post-Op 滑块值变化 - 实时更新
+    postAngleSlider.addEventListener('input', function() {
+        postAngleValue.textContent = this.value;
+        updateAnglePreview('post');
+    });
+    
+    // Post-Op 方向改变 - 实时更新
+    postDirectionSelect.addEventListener('change', function() {
+        updateAnglePreview('post');
+    });
+}
+
+// 新增：实时更新角度预览
+function updateAnglePreview(type) {
+    const angle = parseInt(document.getElementById(`${type}-angle-slider`).value);
+    const direction = document.getElementById(`${type}-angle-direction`).value;
+    
+    // 计算分数
+    let severity, score;
+    if (angle <= 15) {
+        severity = 'Mild';
+        score = 3;
+    } else if (angle <= 30) {
+        severity = 'Moderate';
+        score = 2;
+    } else {
+        severity = 'Severe';
+        score = 1;
+    }
+    
+    // 更新指定类型的图片
+    const data = imageData.columellar[type];
+    if (data && data.nPoint) {
+        // 更新存储的角度信息
+        data.currentAngle = angle;
+        data.currentDirection = direction;
+        
+        // 更新详细信息
+        const detailsHtml = `
+            <p><strong>N Point:</strong> (${data.nPoint[0].toFixed(1)}, ${data.nPoint[1].toFixed(1)})</p>
+            <p><strong>Direction:</strong> ${direction === 'left' ? 'Left' : 'Right'} Deviation</p>
+            <p><strong>Angle:</strong> ${angle}°</p>
+            <p><strong>Severity:</strong> ${severity}</p>
+            <p><strong>Score:</strong> ${score}</p>
+        `;
+        document.getElementById(`${type}OpDetails`).innerHTML = detailsHtml;
+        
+        // 实时绘制角度线
+        drawAngleLineRealtime(type, data.originalImage, data.nPoint, angle, direction);
+        
+        // 更新验证状态
+        updateValidationStatus();
+    }
+}
+
+// 新增：实时绘制角度线（客户端Canvas绘制）
+function drawAngleLineRealtime(type, originalImageBase64, nPoint, angle, direction) {
+    // 创建canvas来绘制角度线
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 创建图片对象
+    const img = new Image();
+    img.onload = function() {
+        // 设置canvas尺寸
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // 绘制原始图片
+        ctx.drawImage(img, 0, 0);
+        
+        // 绘制N点
+        const x = nPoint[0];
+        const y = nPoint[1];
+        
+        // 绘制N点 - 更大更明显
+        ctx.fillStyle = '#0066FF';
+        ctx.beginPath();
+        ctx.arc(x, y, 12, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // 添加N点的白色边框
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(x, y, 12, 0, 2 * Math.PI);
+        ctx.stroke();
+        
+        // 绘制N点标签 - 简洁明显
+        ctx.fillStyle = '#0066FF';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('N', x + 20, y + 5);
+        ctx.textAlign = 'left';  // 重置对齐方式
+        
+        // 绘制垂直参考线（原轴）- 更明显更长
+        ctx.strokeStyle = '#0066FF';  // 蓝色
+        ctx.lineWidth = 5;
+        ctx.setLineDash([10, 5]);  // 更明显的虚线
+        ctx.beginPath();
+        ctx.moveTo(x, Math.max(0, y - 200));
+        ctx.lineTo(x, Math.min(canvas.height, y + 200));
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // 在垂直轴上添加标签 - 简洁明显
+        ctx.fillStyle = '#0066FF';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText('Reference Axis', x + 15, y - 110);
+        
+        if (angle > 0) {
+            // 计算角度线的终点
+            const angleRad = (angle * Math.PI) / 180;
+            const lineLength = 80;
+            
+            let endX, endY;
+            if (direction === 'right') {
+                endX = x + lineLength * Math.sin(angleRad);
+                endY = y - lineLength * Math.cos(angleRad);
+            } else {  // left
+                endX = x - lineLength * Math.sin(angleRad);
+                endY = y - lineLength * Math.cos(angleRad);
+            }
+            
+            // 绘制角度线（偏转轴）- 更粗更长
+            // 绘制偏移轴 - 更粗更明显，延长线段
+            ctx.strokeStyle = '#FF3333';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            
+            // 计算延长的起点和终点
+            const extendLength = 250;  // 延长长度，增加到250px
+            const dx = endX - x;
+            const dy = endY - y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const unitX = dx / length;
+            const unitY = dy / length;
+            
+            const startX = x - unitX * extendLength;
+            const startY = y - unitY * extendLength;
+            const finalEndX = x + unitX * extendLength;
+            const finalEndY = y + unitY * extendLength;
+            
+            ctx.moveTo(Math.max(0, Math.min(canvas.width, startX)), 
+                      Math.max(0, Math.min(canvas.height, startY)));
+            ctx.lineTo(Math.max(0, Math.min(canvas.width, finalEndX)), 
+                      Math.max(0, Math.min(canvas.height, finalEndY)));
+            ctx.stroke();
+            
+            // 在偏转轴上添加标签 - 简洁明显
+            const midX = (x + finalEndX) / 2;
+            const midY = (y + finalEndY) / 2;
+            
+            ctx.fillStyle = '#FF3333';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Deviation Axis', midX, midY);
+            ctx.textAlign = 'left';  // 重置对齐方式
+            
+            // 绘制角度弧 - 更大更明显
+            ctx.strokeStyle = '#00AA00';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            const startAngle = -Math.PI / 2;  // 垂直向上
+            const endAngle = direction === 'right' ? 
+                startAngle + angleRad : 
+                startAngle - angleRad;
+            ctx.arc(x, y, 45, startAngle, endAngle);
+            ctx.stroke();
+            
+            // 绘制角度标注 - 更大更粗，绿色，远离偏移轴
+            ctx.fillStyle = '#00AA00';
+            ctx.font = 'bold 24px Arial';
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#00AA00';
+            ctx.textAlign = 'center';
+            
+            // 调整位置，避免与偏移轴重叠
+            let textX, textY;
+            if (direction === 'right') {
+                // 右偏时，把θ放在左上角区域
+                textX = x - 60;
+                textY = y - 50;
+            } else {
+                // 左偏时，把θ放在右上角区域
+                textX = x + 60;
+                textY = y - 50;
+            }
+            
+            // 绘制文字描边，让它更粗
+            ctx.strokeText(`θ = ${angle}°`, textX, textY);
+            ctx.fillText(`θ = ${angle}°`, textX, textY);
+            ctx.textAlign = 'left';  // 重置对齐方式
+        }
+        
+        // 添加说明文字 - 简洁明显
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText(`Columellar Angle: θ = ${angle}° (${direction} deviation)`, 15, 25);
+        
+        // 更新图片显示
+        const resultImg = document.getElementById(`${type}OpImage`);
+        const finalImageDataURL = canvas.toDataURL();
+        const finalImageBase64 = finalImageDataURL.split(',')[1]; // 获取base64数据（去掉data:image/png;base64,前缀）
+        
+        resultImg.src = finalImageDataURL;
+        resultImg.style.display = 'block';
+        document.getElementById(`${type}OpPlaceholder`).style.display = 'none';
+        
+        // 更新存储的图片数据为带角度线的最终图片
+        if (imageData.columellar[type]) {
+            imageData.columellar[type].image = finalImageBase64;
+        }
+    };
+    
+    img.src = `data:image/png;base64,${originalImageBase64}`;
+}
+</script>
+{% endblock %}

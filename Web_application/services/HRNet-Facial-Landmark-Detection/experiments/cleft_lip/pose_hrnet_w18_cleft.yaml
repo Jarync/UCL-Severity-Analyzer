@@ -1,0 +1,98 @@
+# ==============================================================
+#  HRNet-Face  →  CLEFT_LIP (6 keypoints)
+# ==============================================================
+
+GPUS: ()
+WORKERS: 4
+PRINT_FREQ: 50
+OUTPUT_DIR: output
+LOG_DIR: log
+PIN_MEMORY: True
+AUTO_RESUME: False
+
+# ------------------------------ 数据集 ------------------------------
+DATASET:
+  DATASET: 'CLEFT_LIP'          # 告诉 get_dataset 选我们自定的数据集
+  ROOT: 'D:/upm_model train/唇裂项目'
+  TRAINSET: '唇裂标注分析结果_512px.csv'   # 标注 csv
+  TESTSET:  '数据集划分.csv'               # 划分 csv（含训练/验证/测试列）
+  IMAGE_DIR: '处理后图片'                   # 图片目录
+  FLIP: True
+  SCALE_FACTOR: 0.25
+  ROT_FACTOR: 30
+
+# ------------------------------ 模型 ------------------------------
+MODEL:
+  NAME: 'hrnet'
+  NUM_JOINTS: 6
+  INIT_WEIGHTS: True
+  PRETRAINED: 'D:/upm_model train/唇裂项目/HR18-WFLW.pth'
+
+  IMAGE_SIZE: [256, 256]
+  HEATMAP_SIZE: [64, 64]
+  SIGMA: 1.5
+  TARGET_TYPE: 'Gaussian'
+
+  EXTRA:
+    STEM_INPLANES: 64
+    FINAL_CONV_KERNEL: 1
+    WITH_HEAD: True
+
+    # ************ 只加载 backbone，不加载 head ************
+    PRETRAINED_LAYERS:
+      - conv1
+      - bn1
+      - conv2
+      - bn2
+      - layer1
+      - transition1
+      - stage2
+      - transition2
+      - stage3
+      - transition3
+      - stage4        # ← 到此为止。head 会用新的 6×270 权重重新初始化
+    # ******************************************************
+
+    # ---------- HRNet-W18 主干结构 ----------
+    STAGE2:
+      NUM_MODULES: 1
+      NUM_BRANCHES: 2
+      BLOCK: BASIC
+      NUM_BLOCKS: [4, 4]
+      NUM_CHANNELS: [18, 36]
+      FUSE_METHOD: SUM
+
+    STAGE3:
+      NUM_MODULES: 4
+      NUM_BRANCHES: 3
+      BLOCK: BASIC
+      NUM_BLOCKS: [4, 4, 4]
+      NUM_CHANNELS: [18, 36, 72]
+      FUSE_METHOD: SUM
+
+    STAGE4:
+      NUM_MODULES: 3
+      NUM_BRANCHES: 4
+      BLOCK: BASIC
+      NUM_BLOCKS: [4, 4, 4, 4]
+      NUM_CHANNELS: [18, 36, 72, 144]
+      FUSE_METHOD: SUM
+
+# ------------------------------ 训练 ------------------------------
+TRAIN:
+  BATCH_SIZE_PER_GPU: 4
+  SHUFFLE: True
+  BEGIN_EPOCH: 0
+  END_EPOCH: 60
+  RESUME: True
+  OPTIMIZER: 'adam'
+  LR: 0.0001
+  LR_STEP: [30, 50]
+  LR_FACTOR: 0.1
+  MOMENTUM: 0.0
+  NESTEROV: False
+  WD: 0.0
+
+# ------------------------------ 测试 ------------------------------
+TEST:
+  BATCH_SIZE_PER_GPU: 4

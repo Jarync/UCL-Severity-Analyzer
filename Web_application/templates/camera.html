@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-box">
+  <h2>Real-Time Face Detection with Landmarks</h2>
+  <div class="camera-container">
+    <div id="permission-message" style="display: none;">
+      <p>Please allow access to your camera to use this feature.</p>
+    </div>
+    <div class="camera-frame">
+      <video id="videoElement" autoplay playsinline style="width: 640px; height: 480px;"></video>
+      <canvas id="canvasElement" style="display:none;"></canvas>
+    </div>
+  </div>
+  <p>Landmarks are displayed in real-time.</p>
+</div>
+
+<style>
+.camera-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.camera-frame {
+    width: 640px;
+    height: 480px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+#videoElement {
+    background: #f0f0f0;
+}
+
+#canvasElement {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+</style>
+
+<script>
+const video = document.getElementById('videoElement');
+const canvas = document.getElementById('canvasElement');
+const ctx = canvas.getContext('2d');
+
+// 请求摄像头权限并启动视频流
+navigator.mediaDevices.getUserMedia({ 
+    video: {
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+    }
+})
+.then(function(stream) {
+    video.srcObject = stream;
+    document.getElementById('permission-message').style.display = 'none';
+    
+    // 开始处理视频帧
+    video.addEventListener('play', function() {
+        setInterval(processFrame, 100); // 每100ms处理一帧
+    });
+})
+.catch(function(err) {
+    document.getElementById('permission-message').style.display = 'block';
+    console.log("Error accessing camera: " + err);
+});
+
+// 处理视频帧并发送到服务器
+function processFrame() {
+    if (video.paused || video.ended) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+
+    // 将帧发送到服务器进行处理
+    canvas.toBlob(function(blob) {
+        const reader = new FileReader();
+        reader.onloadend = function() {
+            const base64data = reader.result;
+            
+            fetch('{{ url_for("face_detection") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: base64data
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.image) {
+                    // 显示处理后的图像
+                    const img = new Image();
+                    img.src = 'data:image/jpeg;base64,' + data.image;
+                    img.onload = function() {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    };
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        };
+        reader.readAsDataURL(blob);
+    }, 'image/jpeg', 0.8);  // 降低一点图片质量以提高性能
+}
+
+// 确保视频元素可见
+video.style.display = 'none';  // 隐藏原始视频
+canvas.style.display = 'block'; // 显示处理后的画面
+
+// 调整处理频率
+setInterval(processFrame, 100);  // 每100ms处理一帧
+</script>
+{% endblock %}

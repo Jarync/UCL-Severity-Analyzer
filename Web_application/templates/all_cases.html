@@ -1,0 +1,775 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-box">
+    <div class="page-header">
+        <h2>All Cases</h2>
+        <p>View and manage all patient cases</p>
+        <button onclick="downloadAllImages()" class="download-all-btn">
+            <i class="fas fa-download"></i> Download All Images
+        </button>
+    </div>
+    
+    <div class="search-container">
+        <div class="input-group">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by username..." class="form-control">
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Case ID</th>
+                    <th>Patient Username</th>
+                    <th>Pre-Op Image</th>
+                    <th>Post-Op Image</th>
+                    <th>Pre-Op Severity</th>
+                    <th>Post-Op Severity</th>
+                    <th>Doctor Reviewed</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for case in cases %}
+                <tr class="case-row">
+                    <td>{{ case.id }}</td>
+                    <td>
+                        <a href="{{ url_for('view_patient_profile', user_id=case.user.id) }}" 
+                           class="patient-link">{{ case.user.username }}</a>
+                    </td>
+                    <td class="image-cell">
+                        {% if case.pre_image %}
+                            <div class="image-container">
+                                <img src="data:image/png;base64,{{ case.pre_image }}" alt="Pre-op image">
+                                <button onclick="downloadImage('{{ case.id }}', 'pre')" class="download-btn">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        {% else %}
+                            <span class="no-image">No Image</span>
+                        {% endif %}
+                    </td>
+                    <td class="image-cell">
+                        {% if case.post_image %}
+                            <div class="image-container">
+                                <img src="data:image/png;base64,{{ case.post_image }}" alt="Post-op image">
+                                <button onclick="downloadImage('{{ case.id }}', 'post')" class="download-btn">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        {% else %}
+                            <span class="no-image">No Image</span>
+                        {% endif %}
+                    </td>
+                    <!-- Pre-Op Severity - 综合显示所有参数 -->
+                    <td class="severity-cell">
+                        <div class="severity-container">
+                            <!-- A/B Ratio -->
+                            <div class="param-row">
+                                <span class="param-label">A/B Ratio:</span>
+                            {% if case.pre_ratio %}
+                                    <span class="param-value">{{ "%.3f"|format(case.pre_ratio) }}</span>
+                                    {% set pre_alar_severity = '' %}
+                                    {% if case.pre_severity and not case.pre_severity.startswith('Comprehensive:') %}
+                                        {% set pre_alar_severity = case.pre_severity %}
+                                    {% else %}
+                                        {% if case.pre_ratio <= 0.05 %}
+                                            {% set pre_alar_severity = 'Mild' %}
+                                        {% elif case.pre_ratio <= 0.10 %}
+                                            {% set pre_alar_severity = 'Moderate' %}
+                                        {% else %}
+                                            {% set pre_alar_severity = 'Severe' %}
+                                        {% endif %}
+                                    {% endif %}
+                                    <span class="param-severity severity-{{ pre_alar_severity.lower() }}">
+                                        ({{ pre_alar_severity }})
+                                    </span>
+                                {% else %}
+                                    <span class="no-data">Not Analyzed</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- CC/CN Ratio -->
+                            <div class="param-row">
+                                <span class="param-label">CC/CN Ratio:</span>
+                                {% if case.pre_nostril_ratio %}
+                                    <span class="param-value">{{ "%.3f"|format(case.pre_nostril_ratio) }}</span>
+                                    {% if case.pre_nostril_severity %}
+                                        <span class="param-severity severity-{{ case.pre_nostril_severity.lower() }}">
+                                            ({{ case.pre_nostril_severity }})
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="no-data">Not Analyzed</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Angle -->
+                            <div class="param-row">
+                                <span class="param-label">Angle:</span>
+                                {% if case.pre_columellar_severity %}
+                                    <span class="param-value">{{ case.pre_columellar_angle or 0 }}°</span>
+                                    <span class="param-severity severity-{{ case.pre_columellar_severity.lower() }}">
+                                        ({{ case.pre_columellar_severity }})
+                                    </span>
+                                {% else %}
+                                    <span class="no-data">Not Analyzed</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Comprehensive Score -->
+                            <div class="param-row total-row">
+                                <span class="param-label">Comprehensive Score:</span>
+                                {% set pre_score = 0 %}
+                                {% set pre_count = 0 %}
+                                {% set pre_total_severity = '' %}
+                                {% if case.pre_severity %}
+                                    {% if case.pre_severity == 'Mild' %}
+                                        {% set pre_score = pre_score + 3 %}
+                                    {% elif case.pre_severity == 'Moderate' %}
+                                        {% set pre_score = pre_score + 2 %}
+                                    {% elif case.pre_severity == 'Severe' %}
+                                        {% set pre_score = pre_score + 1 %}
+                                    {% endif %}
+                                    {% set pre_count = pre_count + 1 %}
+                                {% endif %}
+                                {% if case.pre_nostril_severity %}
+                                    {% if case.pre_nostril_severity == 'Mild' %}
+                                        {% set pre_score = pre_score + 3 %}
+                                    {% elif case.pre_nostril_severity == 'Moderate' %}
+                                        {% set pre_score = pre_score + 2 %}
+                                    {% elif case.pre_nostril_severity == 'Severe' %}
+                                        {% set pre_score = pre_score + 1 %}
+                                    {% endif %}
+                                    {% set pre_count = pre_count + 1 %}
+                                {% endif %}
+                                {% if case.pre_columellar_severity %}
+                                    {% if case.pre_columellar_severity == 'Mild' %}
+                                        {% set pre_score = pre_score + 3 %}
+                                    {% elif case.pre_columellar_severity == 'Moderate' %}
+                                        {% set pre_score = pre_score + 2 %}
+                                    {% elif case.pre_columellar_severity == 'Severe' %}
+                                        {% set pre_score = pre_score + 1 %}
+                                    {% endif %}
+                                    {% set pre_count = pre_count + 1 %}
+                                {% endif %}
+                                {% if pre_count > 0 %}
+                                    {% if pre_score >= 7 %}
+                                        {% set pre_total_severity = 'Mild' %}
+                                    {% elif pre_score >= 4 %}
+                                        {% set pre_total_severity = 'Moderate' %}
+                                    {% else %}
+                                        {% set pre_total_severity = 'Severe' %}
+                                    {% endif %}
+                                    <span class="param-value">{{ pre_score }}</span>
+                                    <span class="param-severity severity-{{ pre_total_severity.lower() }}">
+                                        ({{ pre_total_severity }})
+                                    </span>
+                                {% else %}
+                                    <span class="no-data">Not Calculated</span>
+                            {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- Post-Op Severity - 综合显示所有参数 -->
+                    <td class="severity-cell">
+                        <div class="severity-container">
+                            <!-- A/B Ratio -->
+                            <div class="param-row">
+                                <span class="param-label">A/B Ratio:</span>
+                            {% if case.post_ratio %}
+                                    <span class="param-value">{{ "%.3f"|format(case.post_ratio) }}</span>
+                                    {% set post_alar_severity = '' %}
+                                    {% if case.post_severity and not case.post_severity.startswith('Comprehensive:') %}
+                                        {% set post_alar_severity = case.post_severity %}
+                                    {% else %}
+                                        {% if case.post_ratio <= 0.05 %}
+                                            {% set post_alar_severity = 'Mild' %}
+                                        {% elif case.post_ratio <= 0.10 %}
+                                            {% set post_alar_severity = 'Moderate' %}
+                                        {% else %}
+                                            {% set post_alar_severity = 'Severe' %}
+                                        {% endif %}
+                                    {% endif %}
+                                    <span class="param-severity severity-{{ post_alar_severity.lower() }}">
+                                        ({{ post_alar_severity }})
+                                    </span>
+                                {% else %}
+                                    <span class="no-data">Not Analyzed</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- CC/CN Ratio -->
+                            <div class="param-row">
+                                <span class="param-label">CC/CN Ratio:</span>
+                                {% if case.post_nostril_ratio %}
+                                    <span class="param-value">{{ "%.3f"|format(case.post_nostril_ratio) }}</span>
+                                    {% if case.post_nostril_severity %}
+                                        <span class="param-severity severity-{{ case.post_nostril_severity.lower() }}">
+                                            ({{ case.post_nostril_severity }})
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="no-data">Not Analyzed</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Angle -->
+                            <div class="param-row">
+                                <span class="param-label">Angle:</span>
+                                {% if case.post_columellar_severity %}
+                                    <span class="param-value">{{ case.post_columellar_angle or 0 }}°</span>
+                                    <span class="param-severity severity-{{ case.post_columellar_severity.lower() }}">
+                                        ({{ case.post_columellar_severity }})
+                                    </span>
+                                {% else %}
+                                    <span class="no-data">Not Analyzed</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Comprehensive Score -->
+                            <div class="param-row total-row">
+                                <span class="param-label">Comprehensive Score:</span>
+                                {% set post_score = 0 %}
+                                {% set post_count = 0 %}
+                                {% set post_total_severity = '' %}
+                                {% if case.post_severity %}
+                                    {% if case.post_severity == 'Mild' %}
+                                        {% set post_score = post_score + 3 %}
+                                    {% elif case.post_severity == 'Moderate' %}
+                                        {% set post_score = post_score + 2 %}
+                                    {% elif case.post_severity == 'Severe' %}
+                                        {% set post_score = post_score + 1 %}
+                                    {% endif %}
+                                    {% set post_count = post_count + 1 %}
+                                {% endif %}
+                                {% if case.post_nostril_severity %}
+                                    {% if case.post_nostril_severity == 'Mild' %}
+                                        {% set post_score = post_score + 3 %}
+                                    {% elif case.post_nostril_severity == 'Moderate' %}
+                                        {% set post_score = post_score + 2 %}
+                                    {% elif case.post_nostril_severity == 'Severe' %}
+                                        {% set post_score = post_score + 1 %}
+                                    {% endif %}
+                                    {% set post_count = post_count + 1 %}
+                                {% endif %}
+                                {% if case.post_columellar_severity %}
+                                    {% if case.post_columellar_severity == 'Mild' %}
+                                        {% set post_score = post_score + 3 %}
+                                    {% elif case.post_columellar_severity == 'Moderate' %}
+                                        {% set post_score = post_score + 2 %}
+                                    {% elif case.post_columellar_severity == 'Severe' %}
+                                        {% set post_score = post_score + 1 %}
+                                    {% endif %}
+                                    {% set post_count = post_count + 1 %}
+                                {% endif %}
+                                {% if post_count > 0 %}
+                                    {% if post_score >= 7 %}
+                                        {% set post_total_severity = 'Mild' %}
+                                    {% elif post_score >= 4 %}
+                                        {% set post_total_severity = 'Moderate' %}
+                                    {% else %}
+                                        {% set post_total_severity = 'Severe' %}
+                                    {% endif %}
+                                    <span class="param-value">{{ post_score }}</span>
+                                    <span class="param-severity severity-{{ post_total_severity.lower() }}">
+                                        ({{ post_total_severity }})
+                                    </span>
+                                {% else %}
+                                    <span class="no-data">Not Calculated</span>
+                            {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <td>
+                        <span class="status-badge {% if case.doctor_reviewed %}reviewed{% else %}pending{% endif %}">
+                            {{ 'Reviewed' if case.doctor_reviewed else 'Pending' }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('review_case', case_id=case.id) }}" class="btn-review">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('delete_case', case_id=case.id) }}">
+                                <button type="submit" class="btn-delete" onclick="return confirm('Are you sure you want to delete this case?');">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.content-box {
+    max-width: 1600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h2 {
+    color: #2c3e50;
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.page-header p {
+    color: #6c757d;
+    font-size: 1.2em;
+}
+
+.search-container {
+    margin-bottom: 30px;
+    max-width: 400px;
+}
+
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-group i {
+    position: absolute;
+    left: 15px;
+    color: #7dcea0;
+    font-size: 1.2em;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 12px 12px 40px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.form-control:focus {
+    border-color: #2E8B57;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(46, 139, 87, 0.15);
+    background: white;
+}
+
+.table-container {
+    overflow-x: auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+    min-width: 1500px;
+}
+
+th {
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    font-weight: 600;
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 0.8em;
+    line-height: 1.2;
+}
+
+td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+    text-align: center;
+    font-size: 0.8em;
+}
+
+tr:hover {
+    background-color: #f8f9fa;
+}
+
+.image-cell {
+    width: 150px;
+    position: relative;
+    padding: 8px;
+}
+
+.image-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    height: 100px;
+}
+
+.image-cell img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-cell img:hover {
+    transform: scale(1.1);
+}
+
+.download-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #2E8B57;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.download-btn:hover {
+    background: #2E8B57;
+    color: white;
+}
+
+.download-all-btn {
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 1.1em;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    transition: all 0.3s ease;
+}
+
+.download-all-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(46, 139, 87, 0.3);
+}
+
+.no-image {
+    color: #6c757d;
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+.severity-cell {
+    width: 220px;
+    min-width: 200px;
+    padding: 8px;
+}
+
+.severity-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.param-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 6px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #e9ecef;
+    margin-bottom: 3px;
+}
+
+.param-row:nth-child(1) {
+    border-left-color: #3498db;
+}
+
+.param-row:nth-child(2) {
+    border-left-color: #e74c3c;
+}
+
+.param-row:nth-child(3) {
+    border-left-color: #f39c12;
+}
+
+.param-row.total-row {
+    border-left-color: #2E8B57;
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    font-weight: 600;
+}
+
+.param-label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.75em;
+    flex-shrink: 0;
+    min-width: 70px;
+}
+
+.total-row .param-label {
+    color: white;
+}
+
+.param-value {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.8em;
+    margin-right: 3px;
+}
+
+.param-severity {
+    font-size: 0.7em;
+    padding: 1px 4px;
+    border-radius: 8px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.severity-mild {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.severity-moderate {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.severity-severe {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.no-data {
+    color: #6c757d;
+    font-style: italic;
+    font-size: 0.8em;
+}
+
+.total-row .no-data {
+    color: #ffffff;
+}
+
+.patient-link {
+    color: #2E8B57;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.patient-link:hover {
+    color: #3CB371;
+    text-decoration: underline;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.status-badge.reviewed {
+    background-color: #3CB371;
+    color: white;
+}
+
+.status-badge.pending {
+    background-color: #FFA07A;
+    color: white;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn-review, .btn-delete {
+    padding: 8px 12px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-review {
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #DC3545, #FF4757);
+}
+
+.btn-review:hover, .btn-delete:hover {
+    transform: translateY(-2px);
+}
+
+.btn-review:hover {
+    box-shadow: 0 5px 15px rgba(168, 230, 207, 0.3);
+}
+
+.btn-delete:hover {
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+}
+
+.hidden {
+    display: none;
+}
+
+@media (max-width: 1200px) {
+    .content-box {
+        margin: 20px;
+        padding: 20px;
+    }
+    
+    .table-container {
+        overflow-x: scroll;
+    }
+    
+    .severity-cell {
+        width: 160px;
+        min-width: 150px;
+    }
+}
+
+@media (max-width: 992px) {
+    .content-box {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    th, td {
+        padding: 10px 5px;
+        font-size: 0.8em;
+    }
+    
+    .severity-cell {
+        width: 140px;
+        min-width: 130px;
+    }
+    
+    .param-row {
+        padding: 4px 6px;
+    }
+    
+    .param-label {
+        font-size: 0.75em;
+    }
+    
+    .param-value {
+        font-size: 0.8em;
+    }
+    
+    .param-severity {
+        font-size: 0.7em;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header h2 {
+        font-size: 2em;
+    }
+
+    th, td {
+        padding: 8px 3px;
+        font-size: 0.7em;
+    }
+
+    .image-cell {
+        width: 80px;
+    }
+
+    .image-cell img {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .severity-cell {
+        width: 120px;
+        min-width: 110px;
+    }
+    
+    .param-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 3px 5px;
+        gap: 2px;
+    }
+    
+    .param-label {
+        font-size: 0.7em;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('.case-row');
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+
+        rows.forEach(row => {
+            const username = row.querySelector('.patient-link').textContent.toLowerCase();
+            if (username.includes(searchTerm)) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+    });
+
+    searchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Escape') {
+            this.value = '';
+            rows.forEach(row => row.classList.remove('hidden'));
+        }
+    });
+});
+
+function downloadImage(caseId, type) {
+    window.location.href = `/download_image/${caseId}/${type}`;
+}
+
+function downloadAllImages() {
+    if (confirm('Do you want to download all case images?')) {
+        window.location.href = "{{ url_for('download_all_images') }}";
+    }
+}
+</script>
+{% endblock %}

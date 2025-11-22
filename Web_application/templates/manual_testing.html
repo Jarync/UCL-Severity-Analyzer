@@ -1,0 +1,700 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-box">
+    <div class="page-header">
+        <h2>Manual Testing</h2>
+        <p>Upload and analyze pre-operative and post-operative images with comprehensive measurements</p>
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('manual_testing') }}" class="upload-form">
+        <div class="patient-name-container">
+            <div class="patient-input-group">
+                <input type="text" name="patient_name" class="patient-name-input" placeholder="Enter patient name" required>
+            </div>
+        </div>
+
+        <div class="image-sections">
+            <!-- Pre-Op Section -->
+            <div class="image-section">
+                <div class="section-card">
+                    <h3>Pre-Op Image</h3>
+                    <div class="image-preview" id="preOpPreview">
+                        {% if pre_result %}
+                            <img src="data:image/png;base64,{{ pre_result[0] }}" alt="Pre-op image">
+                        {% else %}
+                            <div class="no-image">No image selected</div>
+                        {% endif %}
+                    </div>
+                    <input type="file" name="pre_op_image" id="pre_op_image" class="file-input" accept="image/*">
+                    <label for="pre_op_image" class="file-label">Select Pre-Op Image</label>
+                    
+                    <!-- Alar Facial Symmetry (A/B Ratio) -->
+                    <div class="measurement-group">
+                        <h4 class="measurement-title">
+                            <i class="fas fa-balance-scale"></i>
+                            Alar Facial Symmetry (A/B Ratio)
+                        </h4>
+                        <div class="measurement-row">
+                            <div class="measurement-input">
+                                <div class="input-group">
+                                    <i class="fas fa-ruler"></i>
+                                    <input type="number" step="0.01" name="pre_value_a" id="pre_value_a" class="form-control" placeholder="A Value">
+                                </div>
+                            </div>
+                            <div class="measurement-input">
+                                <div class="input-group">
+                                    <i class="fas fa-ruler"></i>
+                                    <input type="number" step="0.01" name="pre_value_b" id="pre_value_b" class="form-control" placeholder="B Value">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ratio-display" id="preABRatioDisplay">
+                            {% if pre_ratio is not none and pre_ratio %}
+                                <p>A/B Ratio: {{ "%.3f"|format(pre_ratio) }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Nostril Width Ratio (CC/CN) -->
+                    <div class="measurement-group">
+                        <h4 class="measurement-title">
+                            <i class="fas fa-expand-arrows-alt"></i>
+                            Nostril Width Ratio (CC/CN)
+                        </h4>
+                        <div class="measurement-row">
+                            <div class="measurement-input">
+                                <div class="input-group">
+                                    <i class="fas fa-ruler-horizontal"></i>
+                                    <input type="number" step="0.01" name="pre_value_cc" id="pre_value_cc" class="form-control" placeholder="CC Value">
+                                </div>
+                            </div>
+                            <div class="measurement-input">
+                                <div class="input-group">
+                                    <i class="fas fa-ruler-horizontal"></i>
+                                    <input type="number" step="0.01" name="pre_value_cn" id="pre_value_cn" class="form-control" placeholder="CN Value">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ratio-display" id="preCCCNRatioDisplay"></div>
+                    </div>
+
+                    <!-- Columellar Angle -->
+                    <div class="measurement-group">
+                        <h4 class="measurement-title">
+                            <i class="fas fa-angle-right"></i>
+                            Columellar Angle
+                        </h4>
+                        <div class="measurement-row">
+                            <div class="measurement-input angle-input">
+                                <div class="input-group">
+                                    <i class="fas fa-drafting-compass"></i>
+                                    <input type="number" step="0.1" name="pre_angle" id="pre_angle" class="form-control" placeholder="Angle (degrees)">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="angle-display" id="preAngleDisplay"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post-Op Section -->
+            <div class="image-section">
+                <div class="section-card">
+                    <h3>Post-Op Image</h3>
+                    <div class="image-preview" id="postOpPreview">
+                        {% if post_result %}
+                            <img src="data:image/png;base64,{{ post_result[0] }}" alt="Post-op image">
+                        {% else %}
+                            <div class="no-image">No image selected</div>
+                        {% endif %}
+                    </div>
+                    <input type="file" name="post_op_image" id="post_op_image" class="file-input" accept="image/*">
+                    <label for="post_op_image" class="file-label">Select Post-Op Image</label>
+                    
+                    <!-- Alar Facial Symmetry (A/B Ratio) -->
+                    <div class="measurement-group">
+                        <h4 class="measurement-title">
+                            <i class="fas fa-balance-scale"></i>
+                            Alar Facial Symmetry (A/B Ratio)
+                        </h4>
+                        <div class="measurement-row">
+                            <div class="measurement-input">
+                                <div class="input-group">
+                                    <i class="fas fa-ruler"></i>
+                                    <input type="number" step="0.01" name="post_value_a" id="post_value_a" class="form-control" placeholder="A Value">
+                                </div>
+                            </div>
+                            <div class="measurement-input">
+                                <div class="input-group">
+                                    <i class="fas fa-ruler"></i>
+                                    <input type="number" step="0.01" name="post_value_b" id="post_value_b" class="form-control" placeholder="B Value">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ratio-display" id="postABRatioDisplay">
+                            {% if post_ratio is not none and post_ratio %}
+                                <p>A/B Ratio: {{ "%.3f"|format(post_ratio) }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Nostril Width Ratio (CC/CN) -->
+                    <div class="measurement-group">
+                        <h4 class="measurement-title">
+                            <i class="fas fa-expand-arrows-alt"></i>
+                            Nostril Width Ratio (CC/CN)
+                        </h4>
+                        <div class="measurement-row">
+                            <div class="measurement-input">
+                                <div class="input-group">
+                                    <i class="fas fa-ruler-horizontal"></i>
+                                    <input type="number" step="0.01" name="post_value_cc" id="post_value_cc" class="form-control" placeholder="CC Value">
+                                </div>
+                            </div>
+                            <div class="measurement-input">
+                                <div class="input-group">
+                                    <i class="fas fa-ruler-horizontal"></i>
+                                    <input type="number" step="0.01" name="post_value_cn" id="post_value_cn" class="form-control" placeholder="CN Value">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ratio-display" id="postCCCNRatioDisplay"></div>
+                    </div>
+
+                    <!-- Columellar Angle -->
+                    <div class="measurement-group">
+                        <h4 class="measurement-title">
+                            <i class="fas fa-angle-right"></i>
+                            Columellar Angle
+                        </h4>
+                        <div class="measurement-row">
+                            <div class="measurement-input angle-input">
+                                <div class="input-group">
+                                    <i class="fas fa-drafting-compass"></i>
+                                    <input type="number" step="0.1" name="post_angle" id="post_angle" class="form-control" placeholder="Angle (degrees)">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="angle-display" id="postAngleDisplay"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <div class="save-option">
+                <input type="checkbox" name="save_to_cases" value="yes" id="save_to_cases">
+                <label for="save_to_cases">Save to All Cases</label>
+            </div>
+            <button type="submit" class="btn-auth">Process Images</button>
+        </div>
+    </form>
+</div>
+
+<style>
+.content-box {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h2 {
+    color: #2c3e50;
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.page-header p {
+    color: #6c757d;
+    font-size: 1.2em;
+}
+
+.image-sections {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.image-section {
+    flex: 1;
+}
+
+.section-card {
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+.section-card h3 {
+    color: #2c3e50;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.image-preview {
+    width: 100%;
+    height: 250px;
+    border: 2px dashed #e9ecef;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.no-image {
+    color: #6c757d;
+    font-size: 1.1em;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-label {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    text-align: center;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 25px;
+}
+
+.file-label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(46, 139, 87, 0.3);
+}
+
+.measurement-group {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    border-left: 4px solid #2E8B57;
+}
+
+.measurement-title {
+    color: #2c3e50;
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.measurement-title i {
+    color: #2E8B57;
+    font-size: 1.2em;
+}
+
+.measurement-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.measurement-input {
+    flex: 1;
+}
+
+.measurement-input.angle-input {
+    max-width: 200px;
+}
+
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-group i {
+    position: absolute;
+    left: 15px;
+    color: #2E8B57;
+    font-size: 1.1em;
+    z-index: 2;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 12px 12px 40px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.form-control:focus {
+    border-color: #2E8B57;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(46, 139, 87, 0.15);
+    background: white;
+}
+
+.ratio-display, .angle-display {
+    text-align: center;
+    padding: 8px;
+    background: white;
+    border-radius: 8px;
+    color: #2c3e50;
+    font-weight: 600;
+    border: 1px solid #e9ecef;
+    min-height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ratio-display p, .angle-display p {
+    margin: 0;
+    font-size: 0.95em;
+}
+
+.severity-info {
+    font-size: 0.85em;
+    margin-top: 5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.severity-mild {
+    background: #d4edda;
+    color: #155724;
+}
+
+.severity-moderate {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.severity-severe {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.save-option {
+    margin-bottom: 20px;
+}
+
+.save-option input[type="checkbox"] {
+    margin-right: 8px;
+    transform: scale(1.2);
+}
+
+.save-option label {
+    font-size: 1.1em;
+    color: #2c3e50;
+    cursor: pointer;
+}
+
+.btn-auth {
+    padding: 15px 40px;
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.2em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-auth:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(46, 139, 87, 0.3);
+}
+
+.patient-name-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto;
+}
+
+.patient-input-group {
+    position: relative;
+    width: 60%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.patient-name-input {
+    width: 100%;
+    padding: 15px 20px;
+    font-size: 1.1em;
+    border: 2px solid #4CAF50;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #2E8B57;
+    transition: all 0.3s ease;
+}
+
+.patient-name-input::placeholder {
+    color: #8bc34a;
+    opacity: 0.7;
+}
+
+.patient-name-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    border-color: #2E8B57;
+}
+
+@media (max-width: 1200px) {
+    .content-box {
+        max-width: 95%;
+        margin: 20px auto;
+        padding: 20px;
+    }
+    
+    .image-sections {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .measurement-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .measurement-input.angle-input {
+        max-width: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header h2 {
+        font-size: 2em;
+    }
+    
+    .section-card {
+        padding: 20px;
+    }
+    
+    .measurement-group {
+        padding: 15px;
+    }
+    
+    .measurement-title {
+        font-size: 1em;
+    }
+    
+    .patient-input-group {
+        width: 90%;
+    }
+}
+</style>
+
+<script>
+// Image preview functionality
+document.getElementById('pre_op_image').addEventListener('change', function(e) {
+    if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.querySelector('#preOpPreview').innerHTML = 
+                `<img src="${e.target.result}" alt="Pre-op preview">`;
+        };
+        reader.readAsDataURL(this.files[0]);
+    }
+});
+
+document.getElementById('post_op_image').addEventListener('change', function(e) {
+    if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.querySelector('#postOpPreview').innerHTML = 
+                `<img src="${e.target.result}" alt="Post-op preview">`;
+        };
+        reader.readAsDataURL(this.files[0]);
+    }
+});
+
+// Calculation functions
+function calculateRatio(a, b, displayElement, ratioName) {
+    if (a && b && parseFloat(b) !== 0) {
+        const ratio = parseFloat(a) / parseFloat(b);
+        let severity = '';
+        let severityClass = '';
+        
+        if (ratioName === 'A/B') {
+            if (ratio <= 0.05) {
+                severity = 'Mild';
+                severityClass = 'severity-mild';
+            } else if (ratio <= 0.10) {
+                severity = 'Moderate';
+                severityClass = 'severity-moderate';
+            } else {
+                severity = 'Severe';
+                severityClass = 'severity-severe';
+            }
+        } else if (ratioName === 'CC/CN') {
+            if (ratio <= 1.2) {
+                severity = 'Mild';
+                severityClass = 'severity-mild';
+            } else if (ratio <= 1.5) {
+                severity = 'Moderate';
+                severityClass = 'severity-moderate';
+            } else {
+                severity = 'Severe';
+                severityClass = 'severity-severe';
+            }
+        }
+        
+        displayElement.innerHTML = `
+            <p>${ratioName} Ratio: ${ratio.toFixed(3)}</p>
+            ${severity ? `<div class="severity-info ${severityClass}">${severity}</div>` : ''}
+        `;
+    } else {
+        displayElement.innerHTML = '';
+    }
+}
+
+function calculateAngleSeverity(angle, displayElement) {
+    if (angle && parseFloat(angle) >= 0) {
+        const angleValue = parseFloat(angle);
+        let severity = '';
+        let severityClass = '';
+        
+        if (angleValue <= 15) {
+            severity = 'Mild';
+            severityClass = 'severity-mild';
+        } else if (angleValue <= 30) {
+            severity = 'Moderate';
+            severityClass = 'severity-moderate';
+        } else {
+            severity = 'Severe';
+            severityClass = 'severity-severe';
+        }
+        
+        displayElement.innerHTML = `
+            <p>Angle: ${angleValue}°</p>
+            <div class="severity-info ${severityClass}">${severity}</div>
+        `;
+    } else {
+        displayElement.innerHTML = '';
+    }
+}
+
+// Pre-op A/B ratio calculation
+document.getElementById('pre_value_a').addEventListener('input', function() {
+    calculateRatio(
+        this.value,
+        document.getElementById('pre_value_b').value,
+        document.getElementById('preABRatioDisplay'),
+        'A/B'
+    );
+});
+document.getElementById('pre_value_b').addEventListener('input', function() {
+    calculateRatio(
+        document.getElementById('pre_value_a').value,
+        this.value,
+        document.getElementById('preABRatioDisplay'),
+        'A/B'
+    );
+});
+
+// Pre-op CC/CN ratio calculation
+document.getElementById('pre_value_cc').addEventListener('input', function() {
+    calculateRatio(
+        this.value,
+        document.getElementById('pre_value_cn').value,
+        document.getElementById('preCCCNRatioDisplay'),
+        'CC/CN'
+    );
+});
+document.getElementById('pre_value_cn').addEventListener('input', function() {
+    calculateRatio(
+        document.getElementById('pre_value_cc').value,
+        this.value,
+        document.getElementById('preCCCNRatioDisplay'),
+        'CC/CN'
+    );
+});
+
+// Pre-op angle calculation
+document.getElementById('pre_angle').addEventListener('input', function() {
+    calculateAngleSeverity(
+        this.value,
+        document.getElementById('preAngleDisplay')
+    );
+});
+
+// Post-op A/B ratio calculation
+document.getElementById('post_value_a').addEventListener('input', function() {
+    calculateRatio(
+        this.value,
+        document.getElementById('post_value_b').value,
+        document.getElementById('postABRatioDisplay'),
+        'A/B'
+    );
+});
+document.getElementById('post_value_b').addEventListener('input', function() {
+    calculateRatio(
+        document.getElementById('post_value_a').value,
+        this.value,
+        document.getElementById('postABRatioDisplay'),
+        'A/B'
+    );
+});
+
+// Post-op CC/CN ratio calculation
+document.getElementById('post_value_cc').addEventListener('input', function() {
+    calculateRatio(
+        this.value,
+        document.getElementById('post_value_cn').value,
+        document.getElementById('postCCCNRatioDisplay'),
+        'CC/CN'
+    );
+});
+document.getElementById('post_value_cn').addEventListener('input', function() {
+    calculateRatio(
+        document.getElementById('post_value_cc').value,
+        this.value,
+        document.getElementById('postCCCNRatioDisplay'),
+        'CC/CN'
+    );
+});
+
+// Post-op angle calculation
+document.getElementById('post_angle').addEventListener('input', function() {
+    calculateAngleSeverity(
+        this.value,
+        document.getElementById('postAngleDisplay')
+    );
+});
+</script>
+{% endblock %} 

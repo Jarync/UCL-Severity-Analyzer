@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-box">
+    <h2>Statistics</h2>
+    
+    <!-- 图表部分 -->
+    <div class="chart-container">
+        <div id="myPieChart"></div>
+    </div>
+
+    <!-- 统计卡片部分 -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <h3>Total Evaluated Cases</h3>
+            <p>{{ total_cases }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Correct Predictions</h3>
+            <p>{{ correct_cases }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Accuracy Rate</h3>
+            <p>{{ "%.1f"|format(accuracy) }}%</p>
+        </div>
+    </div>
+
+    <!-- 表格部分 -->
+    <div class="table-container" style="display: none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Prediction</th>
+                    <th>Actual</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for case in cases %}
+                <tr>
+                    <td>{{ case.id }}</td>
+                    <td>{{ case.username }}</td>
+                    <td>{{ case.prediction }}</td>
+                    <td>{{ case.actual }}</td>
+                    <td>{{ case.status }}</td>
+                    <td>{{ case.date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+var data = [{
+    values: [{{ correct_cases }}, {{ total_cases - correct_cases }}],
+    labels: ['Correct Predictions', 'Incorrect Predictions'],
+    type: 'pie',
+    hole: 0.4,
+    marker: {
+        colors: ['#4CAF50', '#FF6384']
+    }
+}];
+
+var layout = {
+    title: 'Prediction Accuracy Distribution',
+    showlegend: true,
+    height: Math.min(window.innerHeight * 0.5, 600),
+    width: Math.min(window.innerWidth * 0.5, 600),
+    annotations: [{
+        font: { size: 18 },
+        showarrow: false,
+        text: 'Evaluated',
+        x: 0.5,
+        y: 0.5
+    }],
+    margin: { t: 50, l: 25, r: 25, b: 25 }
+};
+
+var config = {
+    responsive: true,
+    displayModeBar: false
+};
+
+// 创建图表
+Plotly.newPlot('myPieChart', data, layout, config);
+
+// 优化窗口大小改变时的响应
+window.addEventListener('resize', function() {
+    Plotly.relayout('myPieChart', {
+        height: Math.min(window.innerHeight * 0.20, 350),
+        width: Math.min(window.innerWidth * 0.5, 600)
+    });
+});
+</script>
+
+<style>
+.content-box {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.content-box h2 {
+    text-align: center;
+    color: #2c3e50;
+    font-size: 2.5em;
+    margin-bottom: 40px;
+    font-weight: 700;
+}
+
+.stats-cards {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 90%;
+    max-width: 1000px;
+    margin: 15px auto;
+}
+
+.stat-card {
+    flex: 1;
+    min-width: 180px;
+    max-width: 250px;
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-card h3 {
+    color: #666;
+    font-size: calc(1em + 0.5vw);
+    margin-bottom: 15px;
+}
+
+.stat-card p {
+    color: #4CAF50;
+    font-size: calc(1.5em + 1vw);
+    font-weight: bold;
+    margin: 0;
+}
+
+.chart-container {
+    width: 90%;
+    max-width: 600px;
+    height: auto;
+    min-height: 350px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 30px auto;
+    padding-top: 20px;
+}
+
+#myPieChart {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.table-container {
+    width: 90%;
+    max-width: 800px;
+    margin: 15px auto;
+    overflow-x: auto;
+}
+
+@media screen and (max-width: 768px) {
+    .stats-cards {
+        width: 95%;
+    }
+    
+    .stat-card {
+        width: 85%;
+        max-width: none;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+}
+</style>
+{% endblock %}

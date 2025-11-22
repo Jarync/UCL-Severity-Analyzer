@@ -1,0 +1,917 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="review-container">
+    <div class="review-header">
+        <h2>Review Case #{{ case.id }}</h2>
+        <div class="patient-info">
+            <span class="info-badge">Patient: {{ case.user.username }}</span>
+            <span class="analysis-badge">Analysis Type: {{ case.analysis_type or 'Standard' }}</span>
+        </div>
+    </div>
+
+    <!-- 综合分析概览 -->
+    <div class="analysis-overview">
+        <h3>Analysis Overview</h3>
+        <div class="overview-grid">
+            <div class="overview-card">
+                <h4>Pre-Op Analysis</h4>
+                <div class="overview-content">
+                    <!-- A/B Ratio -->
+                    {% if case.pre_ratio %}
+                    <div class="param-item">
+                        <span class="param-name">A/B Ratio:</span>
+                        <span class="param-value">{{ "%.3f"|format(case.pre_ratio) }}</span>
+                        {% set pre_alar_severity = '' %}
+                        {% if case.pre_severity and not case.pre_severity.startswith('Comprehensive:') %}
+                            {% set pre_alar_severity = case.pre_severity %}
+                        {% else %}
+                            {% if case.pre_ratio <= 0.05 %}
+                                {% set pre_alar_severity = 'Mild' %}
+                            {% elif case.pre_ratio <= 0.10 %}
+                                {% set pre_alar_severity = 'Moderate' %}
+                            {% else %}
+                                {% set pre_alar_severity = 'Severe' %}
+                            {% endif %}
+                        {% endif %}
+                        <span class="severity-tag severity-{{ pre_alar_severity.lower() }}">{{ pre_alar_severity }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- CC/CN Ratio -->
+                    {% if case.pre_nostril_ratio %}
+                    <div class="param-item">
+                        <span class="param-name">CC/CN Ratio:</span>
+                        <span class="param-value">{{ "%.3f"|format(case.pre_nostril_ratio) }}</span>
+                        {% if case.pre_nostril_severity %}
+                        <span class="severity-tag severity-{{ case.pre_nostril_severity.lower() }}">{{ case.pre_nostril_severity }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Columellar Angle -->
+                    {% if case.pre_columellar_severity %}
+                    <div class="param-item">
+                        <span class="param-name">Columellar Angle:</span>
+                        <span class="param-value">{{ case.pre_columellar_angle or 0 }}°</span>
+                        <span class="severity-tag severity-{{ case.pre_columellar_severity.lower() }}">{{ case.pre_columellar_severity }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Comprehensive Score -->
+                    {% set pre_score = 0 %}
+                    {% set pre_count = 0 %}
+                    {% if case.pre_severity and not case.pre_severity.startswith('Comprehensive:') %}
+                        {% if case.pre_severity == 'Mild' %}
+                            {% set pre_score = pre_score + 3 %}
+                        {% elif case.pre_severity == 'Moderate' %}
+                            {% set pre_score = pre_score + 2 %}
+                        {% elif case.pre_severity == 'Severe' %}
+                            {% set pre_score = pre_score + 1 %}
+                        {% endif %}
+                        {% set pre_count = pre_count + 1 %}
+                    {% endif %}
+                    {% if case.pre_nostril_severity %}
+                        {% if case.pre_nostril_severity == 'Mild' %}
+                            {% set pre_score = pre_score + 3 %}
+                        {% elif case.pre_nostril_severity == 'Moderate' %}
+                            {% set pre_score = pre_score + 2 %}
+                        {% elif case.pre_nostril_severity == 'Severe' %}
+                            {% set pre_score = pre_score + 1 %}
+                        {% endif %}
+                        {% set pre_count = pre_count + 1 %}
+                    {% endif %}
+                    {% if case.pre_columellar_severity %}
+                        {% if case.pre_columellar_severity == 'Mild' %}
+                            {% set pre_score = pre_score + 3 %}
+                        {% elif case.pre_columellar_severity == 'Moderate' %}
+                            {% set pre_score = pre_score + 2 %}
+                        {% elif case.pre_columellar_severity == 'Severe' %}
+                            {% set pre_score = pre_score + 1 %}
+                        {% endif %}
+                        {% set pre_count = pre_count + 1 %}
+                    {% endif %}
+                    {% if pre_count > 0 %}
+                        {% if pre_score >= 7 %}
+                            {% set pre_total_severity = 'Mild' %}
+                        {% elif pre_score >= 4 %}
+                            {% set pre_total_severity = 'Moderate' %}
+                        {% else %}
+                            {% set pre_total_severity = 'Severe' %}
+                        {% endif %}
+                        <div class="param-item comprehensive">
+                            <span class="param-name">Comprehensive Score:</span>
+                            <span class="param-value">{{ pre_score }}</span>
+                            <span class="severity-tag severity-{{ pre_total_severity.lower() }}">{{ pre_total_severity }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="overview-card">
+                <h4>Post-Op Analysis</h4>
+                <div class="overview-content">
+                    <!-- A/B Ratio -->
+                    {% if case.post_ratio %}
+                    <div class="param-item">
+                        <span class="param-name">A/B Ratio:</span>
+                        <span class="param-value">{{ "%.3f"|format(case.post_ratio) }}</span>
+                        {% set post_alar_severity = '' %}
+                        {% if case.post_severity and not case.post_severity.startswith('Comprehensive:') %}
+                            {% set post_alar_severity = case.post_severity %}
+                        {% else %}
+                            {% if case.post_ratio <= 0.05 %}
+                                {% set post_alar_severity = 'Mild' %}
+                            {% elif case.post_ratio <= 0.10 %}
+                                {% set post_alar_severity = 'Moderate' %}
+                            {% else %}
+                                {% set post_alar_severity = 'Severe' %}
+                            {% endif %}
+                        {% endif %}
+                        <span class="severity-tag severity-{{ post_alar_severity.lower() }}">{{ post_alar_severity }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- CC/CN Ratio -->
+                    {% if case.post_nostril_ratio %}
+                    <div class="param-item">
+                        <span class="param-name">CC/CN Ratio:</span>
+                        <span class="param-value">{{ "%.3f"|format(case.post_nostril_ratio) }}</span>
+                        {% if case.post_nostril_severity %}
+                        <span class="severity-tag severity-{{ case.post_nostril_severity.lower() }}">{{ case.post_nostril_severity }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Columellar Angle -->
+                    {% if case.post_columellar_severity %}
+                    <div class="param-item">
+                        <span class="param-name">Columellar Angle:</span>
+                        <span class="param-value">{{ case.post_columellar_angle or 0 }}°</span>
+                        <span class="severity-tag severity-{{ case.post_columellar_severity.lower() }}">{{ case.post_columellar_severity }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Comprehensive Score -->
+                    {% set post_score = 0 %}
+                    {% set post_count = 0 %}
+                    {% if case.post_severity and not case.post_severity.startswith('Comprehensive:') %}
+                        {% if case.post_severity == 'Mild' %}
+                            {% set post_score = post_score + 3 %}
+                        {% elif case.post_severity == 'Moderate' %}
+                            {% set post_score = post_score + 2 %}
+                        {% elif case.post_severity == 'Severe' %}
+                            {% set post_score = post_score + 1 %}
+                        {% endif %}
+                        {% set post_count = post_count + 1 %}
+                    {% endif %}
+                    {% if case.post_nostril_severity %}
+                        {% if case.post_nostril_severity == 'Mild' %}
+                            {% set post_score = post_score + 3 %}
+                        {% elif case.post_nostril_severity == 'Moderate' %}
+                            {% set post_score = post_score + 2 %}
+                        {% elif case.post_nostril_severity == 'Severe' %}
+                            {% set post_score = post_score + 1 %}
+                        {% endif %}
+                        {% set post_count = post_count + 1 %}
+                    {% endif %}
+                    {% if case.post_columellar_severity %}
+                        {% if case.post_columellar_severity == 'Mild' %}
+                            {% set post_score = post_score + 3 %}
+                        {% elif case.post_columellar_severity == 'Moderate' %}
+                            {% set post_score = post_score + 2 %}
+                        {% elif case.post_columellar_severity == 'Severe' %}
+                            {% set post_score = post_score + 1 %}
+                        {% endif %}
+                        {% set post_count = post_count + 1 %}
+                    {% endif %}
+                    {% if post_count > 0 %}
+                        {% if post_score >= 7 %}
+                            {% set post_total_severity = 'Mild' %}
+                        {% elif post_score >= 4 %}
+                            {% set post_total_severity = 'Moderate' %}
+                        {% else %}
+                            {% set post_total_severity = 'Severe' %}
+                        {% endif %}
+                        <div class="param-item comprehensive">
+                            <span class="param-name">Comprehensive Score:</span>
+                            <span class="param-value">{{ post_score }}</span>
+                            <span class="severity-tag severity-{{ post_total_severity.lower() }}">{{ post_total_severity }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模型分析结果展示区域 -->
+    <div class="models-analysis-container">
+        <h3>Model Analysis Results</h3>
+        
+        <!-- Alar Facial Symmetry Model -->
+        {% if case.pre_ratio or case.post_ratio %}
+        <div class="model-section">
+            <div class="model-header">
+                <h4>Alar Facial Symmetry Model</h4>
+                <p>6 keypoints: E1, E2, I1, I2, NL, NR | Calculate: A/B ratio (alar facial symmetry)</p>
+            </div>
+            <div class="model-images">
+                <div class="model-image-card">
+                    <h5>Pre-Op Analysis</h5>
+                    <div class="image-frame">
+                        {% if case.pre_image %}
+                            <img src="data:image/png;base64,{{ case.pre_image }}" alt="Pre-Op Alar Analysis">
+                        {% else %}
+                            <div class="no-image">No Pre-Op Analysis</div>
+                        {% endif %}
+                    </div>
+                    {% if case.pre_ratio %}
+                    <div class="analysis-info">
+                        <span class="ratio-info">A/B Ratio: {{ "%.3f"|format(case.pre_ratio) }}</span>
+                        {% set pre_alar_severity = '' %}
+                        {% if case.pre_severity and not case.pre_severity.startswith('Comprehensive:') %}
+                            {% set pre_alar_severity = case.pre_severity %}
+                        {% else %}
+                            {% if case.pre_ratio <= 0.05 %}
+                                {% set pre_alar_severity = 'Mild' %}
+                            {% elif case.pre_ratio <= 0.10 %}
+                                {% set pre_alar_severity = 'Moderate' %}
+                            {% else %}
+                                {% set pre_alar_severity = 'Severe' %}
+                            {% endif %}
+                        {% endif %}
+                        <span class="severity-tag severity-{{ pre_alar_severity.lower() }}">{{ pre_alar_severity }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="model-image-card">
+                    <h5>Post-Op Analysis</h5>
+                    <div class="image-frame">
+                        {% if case.post_image %}
+                            <img src="data:image/png;base64,{{ case.post_image }}" alt="Post-Op Alar Analysis">
+                        {% else %}
+                            <div class="no-image">No Post-Op Analysis</div>
+                        {% endif %}
+                    </div>
+                    {% if case.post_ratio %}
+                    <div class="analysis-info">
+                        <span class="ratio-info">A/B Ratio: {{ "%.3f"|format(case.post_ratio) }}</span>
+                        {% set post_alar_severity = '' %}
+                        {% if case.post_severity and not case.post_severity.startswith('Comprehensive:') %}
+                            {% set post_alar_severity = case.post_severity %}
+                        {% else %}
+                            {% if case.post_ratio <= 0.05 %}
+                                {% set post_alar_severity = 'Mild' %}
+                            {% elif case.post_ratio <= 0.10 %}
+                                {% set post_alar_severity = 'Moderate' %}
+                            {% else %}
+                                {% set post_alar_severity = 'Severe' %}
+                            {% endif %}
+                        {% endif %}
+                        <span class="severity-tag severity-{{ post_alar_severity.lower() }}">{{ post_alar_severity }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Nostril Width Ratio Model -->
+        {% if case.pre_nostril_ratio or case.post_nostril_ratio %}
+        <div class="model-section">
+            <div class="model-header">
+                <h4>Nostril Width Ratio Model (CC/CN)</h4>
+                <p>5 keypoints: CC1, CC2, CN1, CN2, N | Calculate: Nostril width ratio</p>
+            </div>
+            <div class="model-images">
+                <div class="model-image-card">
+                    <h5>Pre-Op Analysis</h5>
+                    <div class="image-frame">
+                        {% if case.pre_nostril_image %}
+                            <img src="data:image/png;base64,{{ case.pre_nostril_image }}" alt="Pre-Op Nostril Analysis">
+                        {% elif case.pre_nostril_ratio %}
+                            <div class="placeholder-analysis">
+                                <i class="fas fa-chart-line"></i>
+                                <p>Nostril Analysis Available</p>
+                                <small>CC/CN Ratio: {{ "%.3f"|format(case.pre_nostril_ratio) }}</small>
+                            </div>
+                        {% else %}
+                            <div class="no-image">No Pre-Op Nostril Analysis</div>
+                        {% endif %}
+                    </div>
+                    {% if case.pre_nostril_ratio %}
+                    <div class="analysis-info">
+                        <span class="ratio-info">CC/CN Ratio: {{ "%.3f"|format(case.pre_nostril_ratio) }}</span>
+                        {% if case.pre_nostril_severity %}
+                        <span class="severity-tag severity-{{ case.pre_nostril_severity.lower() }}">{{ case.pre_nostril_severity }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="model-image-card">
+                    <h5>Post-Op Analysis</h5>
+                    <div class="image-frame">
+                        {% if case.post_nostril_image %}
+                            <img src="data:image/png;base64,{{ case.post_nostril_image }}" alt="Post-Op Nostril Analysis">
+                        {% elif case.post_nostril_ratio %}
+                            <div class="placeholder-analysis">
+                                <i class="fas fa-chart-line"></i>
+                                <p>Nostril Analysis Available</p>
+                                <small>CC/CN Ratio: {{ "%.3f"|format(case.post_nostril_ratio) }}</small>
+                            </div>
+                        {% else %}
+                            <div class="no-image">No Post-Op Nostril Analysis</div>
+                        {% endif %}
+                    </div>
+                    {% if case.post_nostril_ratio %}
+                    <div class="analysis-info">
+                        <span class="ratio-info">CC/CN Ratio: {{ "%.3f"|format(case.post_nostril_ratio) }}</span>
+                        {% if case.post_nostril_severity %}
+                        <span class="severity-tag severity-{{ case.post_nostril_severity.lower() }}">{{ case.post_nostril_severity }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Columellar Angle Model -->
+        {% if case.pre_columellar_severity or case.post_columellar_severity %}
+        <div class="model-section">
+            <div class="model-header">
+                <h4>Columellar Angle Model θ (degree)</h4>
+                <p>Uses N point as origin | Measure columellar angle deviation</p>
+            </div>
+            <div class="model-images">
+                <div class="model-image-card">
+                    <h5>Pre-Op Analysis</h5>
+                    <div class="image-frame">
+                        {% if case.pre_columellar_image %}
+                            <img src="data:image/png;base64,{{ case.pre_columellar_image }}" alt="Pre-Op Columellar Analysis">
+                        {% elif case.pre_columellar_severity %}
+                            <div class="placeholder-analysis">
+                                <i class="fas fa-ruler-combined"></i>
+                                <p>Columellar Angle Analysis</p>
+                                <small>Angle: {{ case.pre_columellar_angle or 0 }}°</small>
+                            </div>
+                        {% else %}
+                            <div class="no-image">No Pre-Op Columellar Analysis</div>
+                        {% endif %}
+                    </div>
+                    {% if case.pre_columellar_severity %}
+                    <div class="analysis-info">
+                        <span class="ratio-info">Angle: {{ case.pre_columellar_angle or 0 }}°</span>
+                        <span class="severity-tag severity-{{ case.pre_columellar_severity.lower() }}">{{ case.pre_columellar_severity }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="model-image-card">
+                    <h5>Post-Op Analysis</h5>
+                    <div class="image-frame">
+                        {% if case.post_columellar_image %}
+                            <img src="data:image/png;base64,{{ case.post_columellar_image }}" alt="Post-Op Columellar Analysis">
+                        {% elif case.post_columellar_severity %}
+                            <div class="placeholder-analysis">
+                                <i class="fas fa-ruler-combined"></i>
+                                <p>Columellar Angle Analysis</p>
+                                <small>Angle: {{ case.post_columellar_angle or 0 }}°</small>
+                            </div>
+                        {% else %}
+                            <div class="no-image">No Post-Op Columellar Analysis</div>
+                        {% endif %}
+                    </div>
+                    {% if case.post_columellar_severity %}
+                    <div class="analysis-info">
+                        <span class="ratio-info">Angle: {{ case.post_columellar_angle or 0 }}°</span>
+                        <span class="severity-tag severity-{{ case.post_columellar_severity.lower() }}">{{ case.post_columellar_severity }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- 如果没有任何分析结果 -->
+        {% if not (case.pre_ratio or case.post_ratio or case.pre_nostril_ratio or case.post_nostril_ratio or case.pre_columellar_severity or case.post_columellar_severity) %}
+        <div class="no-analysis">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h4>No Analysis Results Available</h4>
+            <p>This case does not contain any model analysis results.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 详细技术信息 -->
+    <div class="technical-details">
+        <h3>Technical Details</h3>
+        <div class="details-grid">
+            <div class="detail-card">
+                <h4>Database Information</h4>
+                <div class="detail-content">
+                    <p><strong>Case ID:</strong> {{ case.id }}</p>
+                    <p><strong>Patient ID:</strong> {{ case.user_id }}</p>
+                    <p><strong>Analysis Type:</strong> {{ case.analysis_type or 'Standard' }}</p>
+                    <p><strong>Doctor Reviewed:</strong> {{ 'Yes' if case.doctor_reviewed else 'No' }}</p>
+                    {% if case.doctor_reviewed %}
+                    <p><strong>Doctor Approved:</strong> {{ 'Yes' if case.doctor_approved else 'No' }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="detail-card">
+                <h4>Raw Severity Data</h4>
+                <div class="detail-content">
+                    {% if case.pre_severity %}
+                    <p><strong>Pre-Op Severity:</strong> {{ case.pre_severity }}</p>
+                    {% endif %}
+                    {% if case.post_severity %}
+                    <p><strong>Post-Op Severity:</strong> {{ case.post_severity }}</p>
+                    {% endif %}
+                    {% if case.pre_nostril_severity %}
+                    <p><strong>Pre-Op Nostril Severity:</strong> {{ case.pre_nostril_severity }}</p>
+                    {% endif %}
+                    {% if case.post_nostril_severity %}
+                    <p><strong>Post-Op Nostril Severity:</strong> {{ case.post_nostril_severity }}</p>
+                    {% endif %}
+                    {% if case.pre_columellar_severity %}
+                    <p><strong>Pre-Op Columellar Severity:</strong> {{ case.pre_columellar_severity }}</p>
+                    {% endif %}
+                    {% if case.post_columellar_severity %}
+                    <p><strong>Post-Op Columellar Severity:</strong> {{ case.post_columellar_severity }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="review-actions">
+        <form method="POST">
+            <button class="btn-approve" name="approve" type="submit">
+                <i class="fas fa-check"></i> Approve
+            </button>
+            <button class="btn-reject" name="reject" type="submit">
+                <i class="fas fa-times"></i> Reject
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+.review-container {
+    max-width: 1400px;
+    margin: 20px auto;
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.review-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.review-header h2 {
+    color: #2c3e50;
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.patient-info {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.info-badge, .analysis-badge {
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(46, 139, 87, 0.3);
+}
+
+.analysis-badge {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.analysis-overview {
+    margin-bottom: 40px;
+}
+
+.analysis-overview h3 {
+    color: #2c3e50;
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.overview-card {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border-left: 5px solid #2E8B57;
+}
+
+.overview-card h4 {
+    color: #2c3e50;
+    font-size: 1.4em;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.overview-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.param-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.param-item.comprehensive {
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    color: white;
+    font-weight: 600;
+}
+
+.param-name {
+    font-weight: 600;
+    color: #2c3e50;
+    flex-shrink: 0;
+}
+
+.param-item.comprehensive .param-name {
+    color: white;
+}
+
+.param-value {
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 10px;
+}
+
+.param-item.comprehensive .param-value {
+    color: white;
+}
+
+.severity-tag {
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.severity-mild {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.severity-moderate {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.severity-severe {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.param-item.comprehensive .severity-tag {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.models-analysis-container {
+    margin-bottom: 40px;
+}
+
+.models-analysis-container h3 {
+    color: #2c3e50;
+    font-size: 1.8em;
+    margin-bottom: 30px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.model-section {
+    background: #f8f9fa;
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border-left: 5px solid #2E8B57;
+}
+
+.model-header {
+    text-align: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.model-header h4 {
+    color: #2c3e50;
+    font-size: 1.4em;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.model-header p {
+    color: #6c757d;
+    font-size: 0.95em;
+    margin: 0;
+    font-style: italic;
+}
+
+.model-images {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+.model-image-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+}
+
+.model-image-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.model-image-card h5 {
+    color: #2c3e50;
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 600;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.image-frame {
+    border-radius: 12px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-frame img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.placeholder-analysis {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #6c757d;
+    text-align: center;
+}
+
+.placeholder-analysis i {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    color: #2E8B57;
+}
+
+.placeholder-analysis p {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #2c3e50;
+}
+
+.placeholder-analysis small {
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.analysis-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid #2E8B57;
+}
+
+.ratio-info {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.95em;
+}
+
+.no-analysis {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+    background: #f8f9fa;
+    border-radius: 15px;
+    border: 2px dashed #dee2e6;
+}
+
+.no-analysis i {
+    font-size: 3em;
+    margin-bottom: 20px;
+    color: #ffc107;
+}
+
+.no-analysis h4 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 1.3em;
+}
+
+.no-analysis p {
+    font-size: 1em;
+    margin: 0;
+}
+
+.no-image {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    color: #6c757d;
+    font-style: italic;
+    font-size: 1.2em;
+}
+
+.technical-details {
+    margin-bottom: 40px;
+}
+
+.technical-details h3 {
+    color: #2c3e50;
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.detail-card {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border-left: 5px solid #3498db;
+}
+
+.detail-card h4 {
+    color: #2c3e50;
+    font-size: 1.3em;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.detail-content p {
+    margin: 8px 0;
+    color: #495057;
+    line-height: 1.6;
+}
+
+.detail-content strong {
+    color: #2c3e50;
+}
+
+.review-actions {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.review-actions button {
+    padding: 15px 40px;
+    margin: 0 15px;
+    border: none;
+    border-radius: 30px;
+    font-size: 1.2em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-approve {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-reject {
+    background: linear-gradient(135deg, #dc3545, #fd7e14);
+    color: white;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+.btn-approve:hover, .btn-reject:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 1200px) {
+    .review-container {
+        margin: 20px;
+        padding: 20px;
+    }
+    
+    .overview-grid, .details-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .model-images {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .model-section {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .model-header h4 {
+        font-size: 1.2em;
+    }
+    
+    .model-header p {
+        font-size: 0.85em;
+    }
+    
+    .placeholder-analysis {
+        padding: 30px 15px;
+    }
+    
+    .placeholder-analysis i {
+        font-size: 2em;
+    }
+    
+    .analysis-info {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .patient-info {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .review-actions button {
+        display: block;
+        width: 100%;
+        margin: 10px 0;
+    }
+}
+</style>
+{% endblock %}

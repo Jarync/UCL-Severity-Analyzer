@@ -1,0 +1,462 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    /* 更改背景样式为更柔和的配色 */
+    background: linear-gradient(135deg, #e0f4ff 0%, #ffffff 100%);
+    /* 或者可以选择以下任一种柔和的渐变: */
+    /* background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); */
+    /* background: linear-gradient(135deg, #f5fff0 0%, #ffffff 100%); */
+    /* background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%); */
+    
+    /* 添加细微的图案提升质感 */
+    background-image: 
+        linear-gradient(135deg, #e0f4ff 0%, #ffffff 100%),
+        linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 100% 100%, 20px 20px, 20px 20px;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;  /* 添加相对定位 */
+}
+
+/* 调整装饰图片位置 */
+body::after {
+    content: '';
+    position: absolute;
+    top: 70px;  /* 导航栏下方 */
+    right: 1150px;   /* 靠右对齐 */
+    width: 250px;  /* 控制图片宽度 */
+    height: 300px;  /* 控制图片高度 */
+    background-image: url('../images/doc6.png');
+    background-repeat: no-repeat;
+    background-position: right center;  /* 靠右对齐 */
+    background-size: contain;
+    opacity: 0.1;
+    pointer-events: none;
+    z-index: 0;
+    margin-right: 20px;  /* 右侧边距 */
+}
+
+.main-header {
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+}
+
+nav a {
+    margin: 0 15px;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+h2 {
+    color: #333;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table, th, td {
+    border: 1px solid #ccc;
+}
+
+th {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+}
+
+td {
+    text-align: center;
+    padding: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+.image-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.image-section {
+    flex: 1;
+    min-width: 280px;
+    max-width: 100%;
+}
+
+/* 隐藏原始文件选择按钮 */
+input[type="file"] {
+    display: none;
+}
+
+/* 自定义按钮样式 */
+.custom-file-label {
+    display: inline-block;
+    background-color: #4CAF50; /* 按钮背景颜色 */
+    color: white;             /* 文字颜色 */
+    padding: 10px 20px;       /* 内边距 */
+    border-radius: 5px;       /* 圆角效果 */
+    cursor: pointer;          /* 鼠标样式 */
+    font-size: 14px;          /* 字体大小 */
+    text-align: center;       /* 文字居中 */
+    line-height: normal;      /* 确保文字垂直对齐 */
+    margin: 5px;
+}
+
+/* 悬停效果 */
+.custom-file-label:hover {
+    background-color: #45a049;
+}
+
+/* 确保文字显示 */
+.custom-file-label span {
+    display: inline-block;
+    vertical-align: middle; /* 垂直对齐 */
+}
+
+.content {
+    margin-top: 80px;  /* 调整为导航栏高度加一点点空间 */
+    padding: 0;        /* 移除内边距 */
+    width: 100%;
+    min-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;  /* 确保内容在装饰图片之上 */
+}
+
+.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 120px auto 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.illustration {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.illustration img {
+    max-width: 100%;
+    height: auto;
+}
+
+.login-container {
+    flex: 1;
+    background-color: #fff;
+    padding: 60px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 15px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}
+
+.btn-primary {
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn-primary:hover {
+    background-color: #45a049;
+}
+
+.camera-page {
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.camera-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.camera-frame {
+    border: 5px solid #4CAF50;
+    border-radius: 10px;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.camera-frame img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.statistics-page {
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+#myPieChart {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.chart-container {
+    width: 50%;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.content-box {
+    background-color: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;    /* 移除上下边距 */
+    width: 98%;
+    min-height: calc(100vh - 100px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.table-container {
+    width: 100%;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow-x: auto;
+}
+
+/* 表格样式 */
+.content-box table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+    table-layout: auto;  /* 自动调整列宽 */
+}
+
+.content-box th,
+.content-box td {
+    padding: 12px 20px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    white-space: normal;  /* 允许文字换行 */
+    word-wrap: break-word;  /* 长单词换行 */
+}
+
+.content-box th {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: 500;
+}
+
+.content-box tr:hover {
+    background-color: #f5f5f5;
+}
+
+.content-box > * {
+    max-width: 100%;  /* 确保所有子元素不超过容器宽度 */
+    box-sizing: border-box;  /* 包含padding和border在内的盒模型 */
+}
+
+.content-box img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;  /* 保持图片比例 */
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 768px) {
+    .content {
+        margin-top: 60px;  /* 移动端导航栏通常更小 */
+    }
+    
+    .content-box {
+        width: 98%;
+        padding: 15px;
+    }
+    
+    .table-container {
+        padding: 10px;
+    }
+    
+    .content-box table {
+        font-size: 14px;
+    }
+    
+    .content-box th,
+    .content-box td {
+        padding: 8px 12px;
+    }
+}
+
+/* 大屏幕适配 */
+@media screen and (min-width: 1200px) {
+    .content-box {
+        width: 90%;
+        padding: 40px;
+    }
+}
+
+/* 优化滚动条样式 */
+.content-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+.content-box::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.content-box::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.content-box::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* 基础响应式设计 */
+@media screen and (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    .container {
+        width: 95%;
+        padding: 10px;
+    }
+
+    /* 表格响应式 */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    /* 图片响应式 */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* 表单响应式 */
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    select,
+    textarea {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0;
+    }
+
+    /* 按钮响应式 */
+    button {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    /* 导航栏响应式 */
+    .navbar {
+        padding: 5px;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .nav-item {
+        width: 100%;
+        text-align: center;
+    }
+
+    .content {
+        margin-top: 50px;
+    }
+
+    .image-section {
+        min-width: 100%;
+    }
+}
+
+/* 添加触摸优化 */
+@media (hover: none) {
+    button:hover,
+    .nav-item:hover {
+        transform: none;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+        font-size: 16px; /* 防止iOS自动缩放 */
+    }
+}
+
+
+
+

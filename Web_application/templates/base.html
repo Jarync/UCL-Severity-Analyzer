@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cleft lip analysis system</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    .main-header {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      padding: 15px 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+
+    .main-header h1 {
+      color: white;
+      margin: 0;
+      font-size: 2em;
+      text-align: center;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-top: 15px;
+      padding: 0 20px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    nav a:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .content {
+      margin-top: 150px;
+      padding: 20px;
+      min-height: calc(100vh - 150px);
+      position: relative;
+      z-index: 1;
+    }
+
+    .messages {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      border-radius: 10px;
+      background: white;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .messages p {
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 8px;
+      background: rgba(76, 175, 80, 0.1);
+      color: #2c3e50;
+      border-left: 4px solid #4CAF50;
+    }
+
+    /* 添加导航图标 */
+    nav a[href*="upload"]::before { content: "\f093"; font-family: "Font Awesome 5 Free"; font-weight: 900; }
+    nav a[href*="camera"]::before { content: "\f030"; font-family: "Font Awesome 5 Free"; font-weight: 900; }
+    nav a[href*="add_case"]::before { content: "\f067"; font-family: "Font Awesome 5 Free"; font-weight: 900; }
+    nav a[href*="cases"]::before { content: "\f07c"; font-family: "Font Awesome 5 Free"; font-weight: 900; }
+    nav a[href*="statistics"]::before { content: "\f080"; font-family: "Font Awesome 5 Free"; font-weight: 900; }
+    nav a[href*="logout"]::before { content: "\f2f5"; font-family: "Font Awesome 5 Free"; font-weight: 900; }
+    nav a[href*="login"]::before { content: "\f2f6"; font-family: "Font Awesome 5 Free"; font-weight: 900; }
+    nav a[href*="register"]::before { content: "\f234"; font-family: "Font Awesome 5 Free"; font-weight: 900; }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .main-header h1 {
+        font-size: 1.5em;
+      }
+
+      nav {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      nav a {
+        width: 80%;
+        justify-content: center;
+      }
+
+      .content {
+        margin-top: 200px;
+      }
+    }
+
+    /* 添加装饰性背景元素 */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #4CAF50;
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #45a049;
+    }
+
+    .header-content {
+      position: relative;
+      width: 100%;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-info {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 8px 15px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(5px);
+      transition: all 0.3s ease;
+      z-index: 1001;
+    }
+
+    .user-greeting {
+      color: white;
+      font-size: 0.9em;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-greeting i {
+      font-size: 1.2em;
+      margin-right: 5px;
+    }
+
+    .user-info:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-50%) scale(1.02);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        padding: 10px;
+      }
+
+      .user-info {
+        position: static;
+        transform: none;
+        margin-bottom: 10px;
+        width: auto;
+      }
+
+      .main-header h1 {
+        padding: 0;
+        font-size: 1.5em;
+      }
+    }
+
+    .header {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      color: white;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .left-header {
+      flex: 1;
+    }
+
+    .center-header {
+      flex: 2;
+      text-align: center;
+    }
+
+    .right-header {
+      flex: 1;
+    }
+
+    .nav-menu {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .nav-link {
+      color: white;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95em;
+    }
+
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .center-header h1 {
+      margin: 0 0 15px 0;
+      font-size: 1.8em;
+      font-weight: 600;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-greeting {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      font-size: 0.95em;
+      transition: all 0.3s ease;
+    }
+
+    .user-greeting:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .dot-link {
+      opacity: 0.5;
+      padding: 8px !important;
+      margin: 0 -5px;
+      font-size: 20px;
+      background: transparent;
+    }
+
+    .dot-link:hover {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+      }
+
+      .center-header h1 {
+        font-size: 1.5em;
+        margin-bottom: 10px;
+      }
+
+      .nav-menu {
+        gap: 10px;
+      }
+
+      .nav-link {
+        padding: 6px 12px;
+      }
+
+      .user-greeting {
+        margin-bottom: 15px;
+      }
+    }
+
+    /* 导航按钮样式 */
+    .nav-toggle {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        background: #4CAF50;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 1001;
+        transition: all 0.3s ease;
+    }
+
+    .nav-toggle:hover {
+        background: #45a049;
+        transform: scale(1.1);
+    }
+
+    .nav-toggle i {
+        transition: transform 0.3s ease;
+    }
+
+    .nav-toggle.active i {
+        transform: rotate(180deg);
+    }
+
+    /* 导航栏基础样式 */
+    .navbar-wrapper {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+
+    .navbar {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        border-radius: 0 0 20px 20px;
+    }
+
+    /* 品牌和用户信息部分 */
+    .brand-section {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0.6rem 1.2rem;
+        background: rgba(46, 139, 87, 0.1);
+        border-radius: 12px;
+        color: #2E8B57;
+        font-size: 0.95rem;
+    }
+
+    .brand-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2E8B57;
+    }
+
+    /* 导航链接部分 */
+    .nav-section {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0.6rem 1.2rem;
+        color: #4a5568;
+        text-decoration: none;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+
+    .nav-item:hover {
+        background: rgba(46, 139, 87, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .nav-item.active {
+        background: linear-gradient(135deg, rgba(46, 139, 87, 0.2), rgba(60, 179, 113, 0.2));
+        color: #2E8B57;
+    }
+
+    .dot-link {
+        opacity: 0.5;
+        padding: 0.6rem !important;
+        font-size: 1.2rem;
+    }
+
+    .dot-link:hover {
+        opacity: 1;
+        background: rgba(46, 139, 87, 0.1);
+    }
+
+    /* 登出按钮 */
+    .logout-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0.6rem 1.2rem;
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+
+    .logout-btn:hover {
+        background: rgba(239, 68, 68, 0.2);
+        transform: translateY(-2px);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 1024px) {
+        .navbar {
+            padding: 1rem;
+        }
+        
+        .nav-item span {
+            display: none;
+        }
+        
+        .nav-item {
+            padding: 0.6rem;
+        }
+        
+        .user-info span {
+            display: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .navbar {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .nav-section {
+            flex-direction: column;
+            width: 100%;
+            gap: 1rem;
+        }
+
+        .nav-links {
+            justify-content: center;
+        }
+
+        .user-section {
+            justify-content: center;
+        }
+
+        .auth-buttons {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* 滚动效果 */
+    .navbar-hidden {
+        transform: translateY(-100%);
+    }
+
+    /* 用户信息样式 - 固定在左侧 */
+    .user-info-left {
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 15px;
+        background: rgba(46, 139, 87, 0.1);
+        border-radius: 20px;
+        color: #2E8B57;
+        font-size: 0.95rem;
+        z-index: 1001;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-info-left:hover {
+        background: rgba(46, 139, 87, 0.15);
+    }
+
+    @media (max-width: 768px) {
+        .user-info-left {
+            position: static;
+            margin: 10px auto;
+            width: fit-content;
+        }
+    }
+  </style>
+</head>
+<body>
+<header class="navbar-wrapper">
+    <nav class="navbar">
+        <div class="brand-section">
+            <div class="brand-logo">
+                <i class="fas fa-heartbeat"></i>
+                <span>Cleft Analysis</span>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            {% if session.user_id %}
+                <div class="nav-links">
+                    <a href="{{ url_for('upload') }}" class="nav-item {% if request.endpoint == 'upload' %}active{% endif %}">
+                        Upload&preview
+                    </a>
+                    {% if session.role == 'patient' %}
+                    <a href="{{ url_for('add_case') }}" class="nav-item {% if request.endpoint == 'add_case' %}active{% endif %}">
+                        Add Case
+                    </a>
+                    <a href="{{ url_for('view_my_cases') }}" class="nav-item {% if request.endpoint == 'view_my_cases' %}active{% endif %}">
+                        MyCases
+                    </a>
+                    {% endif %}
+                    {% if session.role == 'doctor' %}
+                        <a href="{{ url_for('add_case_for_patient') }}" class="nav-item {% if request.endpoint == 'add_case_for_patient' %}active{% endif %}">
+                            Add Case
+                        </a>
+                        <a href="{{ url_for('view_all_cases') }}" class="nav-item {% if request.endpoint == 'view_all_cases' %}active{% endif %}">
+                            Cases
+                        </a>
+                        <a href="{{ url_for('manual_testing') }}" class="nav-item {% if request.endpoint == 'manual_testing' %}active{% endif %}">
+                            <i class="fas fa-ruler"></i>
+                            Manual Testing
+                        </a>
+                        <a href="{{ url_for('statistics') }}" class="nav-item {% if request.endpoint == 'statistics' %}active{% endif %}">
+                            Statistics
+                        </a>
+                    {% endif %}
+                    <a href="{{ url_for('camera') }}" class="nav-item dot-link">•</a>
+                    <a href="{{ url_for('profile') }}" class="nav-item {% if request.endpoint == 'profile' %}active{% endif %}">
+                        <i class="fas {% if session.role == 'doctor' %}fa-user-md{% else %}fa-user{% endif %}"></i>
+                        {{ session.username }}
+                    </a>
+                    {% if session.get('is_admin') %}
+                        <a href="{{ url_for('user_management') }}" class="nav-item {% if request.endpoint == 'user_management' %}active{% endif %}">
+                            <i class="fas fa-users-cog"></i>
+                            User Management
+                        </a>
+                    {% endif %}
+                </div>
+
+                <div class="user-section">
+                    <a href="{{ url_for('logout') }}" class="logout-btn">
+                        <span>Logout</span>
+                    </a>
+                </div>
+            {% else %}
+                <div class="nav-links">
+                    <a href="{{ url_for('login') }}" class="nav-item {% if request.endpoint == 'login' %}active{% endif %}">
+                        Login
+                    </a>
+                    <a href="{{ url_for('register') }}" class="nav-item {% if request.endpoint == 'register' %}active{% endif %}">
+                        Register
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </nav>
+</header>
+
+<div class="nav-toggle" id="navToggle">
+    <i class="fas fa-chevron-up"></i>
+</div>
+
+<div class="content">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="messages">
+        {% for msg in messages %}
+          <p>{{ msg }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const navbar = document.querySelector('.navbar-wrapper');
+    let lastScroll = 0;
+    
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        
+        // 只有在滚动到顶部时才显示导航栏
+        if (currentScroll === 0) {
+            navbar.classList.remove('navbar-hidden');
+        } 
+        // 只要不在顶部，就隐藏导航栏
+        else {
+            navbar.classList.add('navbar-hidden');
+        }
+        
+        lastScroll = currentScroll;
+    });
+});
+
+</script>
+</body>
+</html>
