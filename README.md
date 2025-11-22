@@ -13,6 +13,8 @@ The system utilizes Deep Learning (HRNet) to detect facial landmarks and calcula
 
 ---
 
+<img width="889" height="874" alt="微信图片_20251123015110_37_218" src="https://github.com/user-attachments/assets/640d9372-1889-4561-8f50-fa598a358786" />
+
 ## 🔒 Data Privacy & Ethics Statement
 
 The dataset used for training this model consists of clinical images collected from **Hospital Universiti Putra Malaysia (HUPM)**.
@@ -69,6 +71,7 @@ The system uses two distinct models. Below is the step-by-step pipeline to repro
 ### Model 1: Front View (Alar Facial Symmetry)
 *Base Architecture: HRNet-W18 (Pre-trained on WFLW)*
 *Citation: [HRNet-Facial-Landmark-Detection](https://github.com/HRNet/HRNet-Facial-Landmark-Detection)*
+<img width="712" height="611" alt="model1_flowchart_NEW drawio (1)" src="https://github.com/user-attachments/assets/caa3664e-e680-4abc-80da-9b77510ec0b2" />
 
 1.  **Preprocessing:**
     * Run `Original Image Processing - Step 1.py`.
@@ -96,6 +99,7 @@ The system uses two distinct models. Below is the step-by-step pipeline to repro
 
 ### Model 2: Columellar/Angle View
 *Base Architecture: Custom HRNet Training (Trained from scratch)*
+<img width="686" height="671" alt="model2_flowchart_NEW drawio (1)" src="https://github.com/user-attachments/assets/d15a9322-dce5-4afd-b963-79b233c6d826" />
 
 1.  **Preprocessing:**
     * Run `Original Image Processing - Step 1.py` (Same as Model 1).
