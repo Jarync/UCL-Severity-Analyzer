@@ -41,6 +41,27 @@ Due to GitHub's file size limits, the pre-trained model weights (.pth) and encry
 
 ---
 
+## 📥 Downloads & Releases
+
+All compiled applications and large model files are hosted in the [**Releases Section**](../../releases).
+
+### 1. 🏥 For Clinicians: Portable Windows App (No Installation)
+* **Release Tag:** `v1.0 - Official Portable Release`
+* **File:** `CleftDetectionApp.zip`
+* **Description:** A fully standalone version of the software.
+    * ✅ **No Python required:** Comes with its own environment.
+    * ✅ **Plug & Play:** Just unzip and run `CleftDetectionApp.exe`.
+    * ✅ **Full Features:** Includes Web App, GUI Launcher, and Database Manager.
+
+### 2. 👨‍💻 For Developers: Model Weights
+* **Release Tag:** `Model Weights`
+* **Files:** `best_NVM_cleftlip_model_HRNet.pth`, `best_NVM_cleftlip_model_HRNet.enc`
+* **Description:** Due to GitHub's file size limits, the deep learning model weights are stored here.
+    * ⚠️ **Crucial:** If you are running the source code (`python app.py`), you **MUST** download these files manually and place them in the `model_training` and `services` folders respectively.
+
+--- 
+
+
 ## 🧠 Methodology & Model Training Pipeline
 
 The system uses two distinct models. Below is the step-by-step pipeline to reproduce the training process.
@@ -161,3 +182,30 @@ UCL-Severity-Analyzer/
 │       ├── split_dataset_points-step 3.py    # Data Splitting
 │       └── ...
 └── README.md
+```
+
+## ©️ Intellectual Property & License
+
+This project is the intellectual property of **Chen Junxu** and **Universiti Putra Malaysia (UPM)**.
+
+**⚠️ Usage Policy:**
+1.  **Academic & Research Use Only:** The source code, models, and methodologies provided in this repository are strictly for non-commercial, educational, and research purposes.
+2.  **No Commercial Use:** Any use for commercial gain, including but not limited to paid services, commercial software integration, or private clinical deployment, is **strictly prohibited** without prior written permission from the author and the institution.
+3.  **Citation Required:** If you use any part of this project (code, dataset logic, or model weights) in your research or work, you **must** acknowledge the source by citing this repository.
+
+**Please cite this work as follows:**
+
+**BibTeX:**
+```bibtex
+@misc{chen2025ucl,
+  author = {Chen, Junxu},
+  title = {Automated Facial Recognition and Severity Classification of Unilateral Cleft Lip Nose Deformities},
+  year = {2025},
+  publisher = {GitHub},
+  journal = {Universiti Putra Malaysia (UPM) Final Year Project},
+  howpublished = {\url{[https://github.com/Jarync/UCL-Severity-Analyzer](https://github.com/Jarync/UCL-Severity-Analyzer)}}
+}
+```
+### Text Format:
+
+Chen, J. (2025). Automated Facial Recognition and Severity Classification of Unilateral Cleft Lip Nose Deformities [Source Code]. Universiti Putra Malaysia. Available at: https://www.google.com/url?sa=E&source=gmail&q=https://github.com/Jarync/UCL-Severity-Analyzer.
