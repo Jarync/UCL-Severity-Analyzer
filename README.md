@@ -23,9 +23,9 @@ cd UCL-Severity-Analyzer
 2. Download Model Weights (Required)
 Due to GitHub's file size limits, the pre-trained model weights (.pth) and encrypted modules (.enc) are stored in the Releases section.
 
-(1) best_NVM_cleftlip_model_HRNet.pth to Model_trainning/First_model/HRNet-Facial-Landmark-Detection/
-(2) best_NVM_cleftlip_model_HRNet.pth to Web_application/services/HRNet-Facial-Landmark-Detection/
-(3) best_NVM_cleftlip_model_HRNet.enc to Web_application/services/HRNet-Facial-Landmark-Detection
+### best_NVM_cleftlip_model_HRNet.pth to Model_trainning/First_model/HRNet-Facial-Landmark-Detection/
+### best_NVM_cleftlip_model_HRNet.pth to Web_application/services/HRNet-Facial-Landmark-Detection/
+### best_NVM_cleftlip_model_HRNet.enc to Web_application/services/HRNet-Facial-Landmark-Detection
 
 ---
 
