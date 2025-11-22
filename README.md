@@ -25,7 +25,7 @@ Due to GitHub's file size limits, the pre-trained model weights (.pth) and encry
 
 ### best_NVM_cleftlip_model_HRNet.pth to Model_trainning/First_model/HRNet-Facial-Landmark-Detection/
 ### best_NVM_cleftlip_model_HRNet.pth to Web_application/services/HRNet-Facial-Landmark-Detection/
-### best_NVM_cleftlip_model_HRNet.enc to Web_application/services/HRNet-Facial-Landmark-Detection
+### best_NVM_cleftlip_model_HRNet.enc to Web_application/services/HRNet-Facial-Landmark-Detection/
 
 ---
 
