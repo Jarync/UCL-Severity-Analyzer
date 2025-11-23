@@ -3,7 +3,7 @@
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![Framework](https://img.shields.io/badge/Framework-Flask-green.svg)
 ![Deep Learning](https://img.shields.io/badge/Model-HRNet-orange.svg)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![License](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)
 
 ## 📖 Introduction
 
@@ -204,28 +204,17 @@ UCL-Severity-Analyzer/
 └── README.md
 ```
 
-## ©️ Intellectual Property & License
+## ©️ Intellectual Property & Usage Policy
 
-This project is the intellectual property of **Chen Junxu** and **Universiti Putra Malaysia (UPM)**.
+**Copyright © 2025 Chen Junxu & Universiti Putra Malaysia (UPM). All Rights Reserved.**
 
-**⚠️ Usage Policy:**
-1.  **Academic & Research Use Only:** The source code, models, and methodologies provided in this repository are strictly for non-commercial, educational, and research purposes.
-2.  **No Commercial Use:** Any use for commercial gain, including but not limited to paid services, commercial software integration, or private clinical deployment, is **strictly prohibited** without prior written permission from the author and the institution.
-3.  **Citation Required:** If you use any part of this project (code, dataset logic, or model weights) in your research or work, you **must** acknowledge the source by citing this repository.
+This project (including source code, model weights, and methodologies) is the intellectual property of the author and the institution.
 
-**Please cite this work as follows:**
+**⚠️ Usage Policy (Strictly Enforced):**
 
-**BibTeX:**
-```bibtex
-@misc{chen2025ucl,
-  author = {Chen, Junxu},
-  title = {Automated Facial Recognition and Severity Classification of Unilateral Cleft Lip Nose Deformities},
-  year = {2025},
-  publisher = {GitHub},
-  journal = {Universiti Putra Malaysia (UPM) Final Year Project},
-  howpublished = {\url{[https://github.com/Jarync/UCL-Severity-Analyzer](https://github.com/Jarync/UCL-Severity-Analyzer)}}
-}
-```
-### Text Format:
+1.  **Academic & Research Use Only:** The resources provided in this repository are strictly for **non-commercial, educational, and research purposes**.
+2.  **No Commercial Use:** Use for commercial gain—including but not limited to paid services, commercial software integration, or private clinical deployment—is **strictly prohibited** without prior written permission from the authors and Universiti Putra Malaysia.
+3.  **Citation Requirement:** If you use any part of this project (code, dataset logic, or model weights) in your research or work, you **must** acknowledge the source by citing this repository.
 
-Chen, J. (2025). Automated Facial Recognition and Severity Classification of Unilateral Cleft Lip Nose Deformities [Source Code]. Universiti Putra Malaysia. Available at: https://www.google.com/url?sa=E&source=gmail&q=https://github.com/Jarync/UCL-Severity-Analyzer.
+**Citation Format:**
+> Chen, J. (2025). *Automated Facial Recognition and Severity Classification of Unilateral Cleft Lip Nose Deformities* [Source Code]. Universiti Putra Malaysia. https://github.com/Jarync/UCL-Severity-Analyzer
