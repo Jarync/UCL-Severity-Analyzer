@@ -125,6 +125,8 @@ The system uses two distinct models. Below is the step-by-step pipeline to repro
 
 To ensure objective assessment, the system calculates severity grades based on specific geometric ratios and angular measurements defined in the clinical study.
 
+The severity classification scheme and geometric calculation formulas implemented in this system are based on the foundational research by **Dr. Pauline** regarding unilateral cleft lip nose anatomical deformities.
+
 **The detailed calculation formulas and classification thresholds are illustrated below:**
 
 <img width="468" height="318" alt="屏幕截图 2025-11-23 020855" src="https://github.com/user-attachments/assets/9183ccef-7340-4b22-8755-ac27aa65d10d" />
@@ -203,6 +205,18 @@ UCL-Severity-Analyzer/
 │       └── ...
 └── README.md
 ```
+
+## 📜 Acknowledgements & Citations
+
+This project is built upon the medical research and guidance provided by my supervisors and the faculty at UPM.
+
+* **Medical Research Foundation:**
+    * The severity classification logic and anatomical ratios used in this software are derived from:
+    > **Dr. Pauline**, *"Developing severity classification of unilateral cleft lip nose anatomical deformity to justify surgical outcome,"* (Unpublished).
+
+* **Supervisor:** Dr. Muhammad Shaufil Adha Bin Shawkany Hazim
+* **Institution:** Universiti Putra Malaysia (UPM)
+* **Base Model:** [HRNet](https://github.com/HRNet/HRNet-Facial-Landmark-Detection)
 
 ## ©️ Intellectual Property & Usage Policy
 
